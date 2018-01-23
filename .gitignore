@@ -3,3 +3,5 @@
 ################################################################################
 
 /.vs
+/IdentityServer4.MicroService.ApiResource/bin/Debug/netcoreapp2.0
+/IdentityServer4.MicroService.ApiResource/obj
