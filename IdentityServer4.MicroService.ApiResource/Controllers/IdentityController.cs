@@ -6,7 +6,8 @@ using static IdentityServer4.MicroService.ApiResource.Data.AppConstant;
 namespace IdentityServer4.MicroService.ApiResource.Controllers
 {
     [Route("Identity")]
-    [ApiExplorerSettings(IgnoreApi = true)]
+    //[ApiExplorerSettings(IgnoreApi = true)]
+    [ServiceFilter(typeof(ApiTracker.ApiTracker), IsReusable = true)]
     public class IdentityController : Controller
     {
         /// <summary>

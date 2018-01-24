@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection;
+using ApiTracker;
 using IdentityServer4.AccessTokenValidation;
 using IdentityServer4.MicroService.ApiResource.Services;
 using Microsoft.AspNetCore.Builder;
@@ -32,6 +33,9 @@ namespace IdentityServer4.MicroService.ApiResource
         public void ConfigureServices(IServiceCollection services)
         {
             var assemblyName = typeof(Startup).GetTypeInfo().Assembly.GetName().Name;
+
+            services.Configure<ApiTrackerSetting>(Configuration.GetSection("ApiTrackerSetting"));
+            services.AddScoped<ApiTracker.ApiTracker>();
 
             #region Cors
             services.AddCors(options =>

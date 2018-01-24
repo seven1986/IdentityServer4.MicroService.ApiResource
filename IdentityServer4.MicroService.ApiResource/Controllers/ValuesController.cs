@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace IdentityServer4.MicroService.ApiResource.Controllers
 {
     [Route("api/[controller]")]
+    [ServiceFilter(typeof(ApiTracker.ApiTracker), IsReusable = true)]
     public class ValuesController : Controller
     {
         // GET api/values
