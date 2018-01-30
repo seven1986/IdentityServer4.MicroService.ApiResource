@@ -51,7 +51,7 @@ namespace IdentityServer4.MicroService.ApiResource
             services.AddAuthentication(IdentityServerAuthenticationDefaults.AuthenticationScheme)
                     .AddIdentityServerAuthentication(options =>
                     {
-                        options.Authority = Configuration["IdentityServer"];
+                        options.Authority = "https://" + Configuration["IdentityServer"];
                         options.ApiName = MicroServiceName;
                     });
             #endregion
@@ -117,8 +117,8 @@ namespace IdentityServer4.MicroService.ApiResource
                     {
                         Type = "oauth2",
                         Flow = "accessCode",
-                        AuthorizationUrl =  Configuration["IdentityServer"] + "/connect/authorize",
-                        TokenUrl =  Configuration["IdentityServer"] + "/connect/token",
+                        AuthorizationUrl = "https://" + Configuration["IdentityServer"] + "/connect/authorize",
+                        TokenUrl = "https://" + Configuration["IdentityServer"] + "/connect/token",
                         Description = "勾选授权范围，获取Token",
                         Scopes = new Dictionary<string, string>(){
                             { "openid","用户标识" },

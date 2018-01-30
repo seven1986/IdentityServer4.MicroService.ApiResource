@@ -106,6 +106,6 @@
     "TimeOut": 500
   }
 
-IdentityServer：identityserver4（授权中心）的服务器地址，如：https://ids.ixingban.com
+IdentityServer：identityserver4（授权中心）的服务器地址，如：ids.ixingban.com
 ApiTrackerSetting：elasticsearch的配置节，可选
 ```
