@@ -5,10 +5,8 @@ using static IdentityServer4.MicroService.ApiResource.Data.AppConstant;
 
 namespace IdentityServer4.MicroService.ApiResource.Controllers
 {
-    [Route("Identity")]
-    //[ApiExplorerSettings(IgnoreApi = true)]
-    [ServiceFilter(typeof(ApiTracker.ApiTracker), IsReusable = true)]
-    public class IdentityController : Controller
+    [Route("Test")]
+    public class TestController : ControllerBase
     {
         /// <summary>
         /// 无需认证

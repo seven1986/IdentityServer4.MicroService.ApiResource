@@ -1,24 +1,34 @@
 ﻿using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 
 namespace IdentityServer4.MicroService.ApiResource.Controllers
 {
     [Route("api/[controller]")]
-    [ServiceFilter(typeof(ApiTracker.ApiTracker), IsReusable = true)]
-    public class ValuesController : Controller
+    //[ServiceFilter(typeof(ApiTracker.ApiTracker), IsReusable = true)]
+    public class ValuesController : ControllerBase
     {
+        public readonly IStringLocalizer l;
+
+        public ValuesController(
+           IStringLocalizer<ValuesController> localizer
+          )
+        {
+            l = localizer;
+        }
+
         // GET api/values
         [HttpGet]
         public IEnumerable<string> Get()
         {
-            return new string[] { "value1", "value2" };
+            return new string[] { l["值1"], l["值2"] };
         }
 
         // GET api/values/5
         [HttpGet("{id}")]
         public string Get(int id)
         {
-            return "value";
+            return l["值"];
         }
 
         // POST api/values

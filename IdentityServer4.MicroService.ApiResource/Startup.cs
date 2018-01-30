@@ -32,11 +32,6 @@ namespace IdentityServer4.MicroService.ApiResource
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            var assemblyName = typeof(Startup).GetTypeInfo().Assembly.GetName().Name;
-
-            services.Configure<ApiTrackerSetting>(Configuration.GetSection("ApiTrackerSetting"));
-            services.AddScoped<ApiTracker.ApiTracker>();
-
             #region Cors
             services.AddCors(options =>
             {
@@ -50,76 +45,45 @@ namespace IdentityServer4.MicroService.ApiResource
             });
             #endregion
 
+            var assemblyName = typeof(Startup).GetTypeInfo().Assembly.GetName().Name;
+
             #region Authentication
             services.AddAuthentication(IdentityServerAuthenticationDefaults.AuthenticationScheme)
                     .AddIdentityServerAuthentication(options =>
                     {
-                        options.Authority = "https://" + Configuration["IdentityServer"];
-                        options.ApiName = "apiresource";
-                    }); 
+                        options.Authority = Configuration["IdentityServer"];
+                        options.ApiName = MicroServiceName;
+                    });
             #endregion
 
-            #region Policy
+            #region 权限定义
             services.AddAuthorization(options =>
             {
                 #region Client的权限策略
-                options.AddPolicy(ClientScopes.Approve,
-                    policy => policy.RequireClaim(ClaimTypes.ClientScope,
-                    ClientScopes.Approve, ClientScopes.All));
+                var scopes = typeof(ClientScopes).GetFields();
 
-                options.AddPolicy(ClientScopes.Create,
-                    policy => policy.RequireClaim(ClaimTypes.ClientScope,
-                    ClientScopes.Create, ClientScopes.All));
+                foreach (var scope in scopes)
+                {
+                    var scopeName = scope.GetRawConstantValue().ToString();
 
-                options.AddPolicy(ClientScopes.Delete,
-                    policy => policy.RequireClaim(ClaimTypes.ClientScope,
-                    ClientScopes.Delete, ClientScopes.All));
+                    var scopeValues = scope.GetCustomAttribute<PolicyClaimValuesAttribute>().ClaimsValues;
 
-                options.AddPolicy(ClientScopes.Read,
-                    policy => policy.RequireClaim(ClaimTypes.ClientScope,
-                    ClientScopes.Read, ClientScopes.All));
-
-                options.AddPolicy(ClientScopes.Reject,
-                    policy => policy.RequireClaim(ClaimTypes.ClientScope,
-                    ClientScopes.Reject, ClientScopes.All));
-
-                options.AddPolicy(ClientScopes.Update,
-                    policy => policy.RequireClaim(ClaimTypes.ClientScope,
-                    ClientScopes.Update, ClientScopes.All));
-
-                options.AddPolicy(ClientScopes.Upload,
-                   policy => policy.RequireClaim(ClaimTypes.ClientScope,
-                   ClientScopes.Upload, ClientScopes.All));
+                    options.AddPolicy(scopeName, policy => policy.RequireClaim(ClaimTypes.ClientScope, scopeValues));
+                }
                 #endregion
 
                 #region User的权限策略
-                options.AddPolicy(UserPermissions.Approve,
-                    policy => policy.RequireClaim(ClaimTypes.UserPermission,
-                    UserPermissions.Approve, UserPermissions.All));
+                var permissions = typeof(UserPermissions).GetFields();
 
-                options.AddPolicy(UserPermissions.Create,
-                    policy => policy.RequireClaim(ClaimTypes.UserPermission,
-                    UserPermissions.Create, UserPermissions.All));
+                foreach (var permission in permissions)
+                {
+                    var permissionName = permission.GetRawConstantValue().ToString();
 
-                options.AddPolicy(UserPermissions.Delete,
-                    policy => policy.RequireClaim(ClaimTypes.UserPermission,
-                    UserPermissions.Delete, UserPermissions.All));
+                    var permissionValues = permission.GetCustomAttribute<PolicyClaimValuesAttribute>().ClaimsValues;
 
-                options.AddPolicy(UserPermissions.Read,
-                    policy => policy.RequireClaim(ClaimTypes.UserPermission,
-                    UserPermissions.Read, UserPermissions.All));
-
-                options.AddPolicy(UserPermissions.Reject,
-                    policy => policy.RequireClaim(ClaimTypes.UserPermission,
-                    UserPermissions.Reject, UserPermissions.All));
-
-                options.AddPolicy(UserPermissions.Update,
-                    policy => policy.RequireClaim(ClaimTypes.UserPermission,
-                    UserPermissions.Update, UserPermissions.All));
-
-                options.AddPolicy(UserPermissions.Upload,
-                   policy => policy.RequireClaim(ClaimTypes.UserPermission,
-                   UserPermissions.Upload, UserPermissions.All));
+                    options.AddPolicy(permissionName,
+                        policy => policy.RequireClaim(ClaimTypes.UserPermission, permissionValues));
+                }
                 #endregion
             });
             #endregion
@@ -147,27 +111,19 @@ namespace IdentityServer4.MicroService.ApiResource
                         Description = "从身份认证中心颁发的Token，根据接口要求决定是否传入。",
                     });
 
+
                 c.AddSecurityDefinition("OAuth2",
                     new OAuth2Scheme()
                     {
                         Type = "oauth2",
                         Flow = "accessCode",
-                        AuthorizationUrl = "https://" + Configuration["IdentityServer"] + "/connect/authorize",
-                        TokenUrl = "https://" + Configuration["IdentityServer"] + "/connect/token",
+                        AuthorizationUrl =  Configuration["IdentityServer"] + "/connect/authorize",
+                        TokenUrl =  Configuration["IdentityServer"] + "/connect/token",
                         Description = "勾选授权范围，获取Token",
                         Scopes = new Dictionary<string, string>(){
                             { "openid","用户标识" },
                             { "profile","用户资料" },
-                            // 下面的scope是对应改项目的
-                            // IdentityServer4.MicroService.ApiResource.Data.ClientScopes
-                            { "apiresource.all","apiresource 所有接口权限"},
-                            { "apiresource.create","apiresource 创建"},
-                            { "apiresource.read","apiresource 读取"},
-                            { "apiresource.update","apiresource 更新"},
-                            { "apiresource.delete","apiresource 删除"},
-                            { "apiresource.approve","apiresource 接受"},
-                            { "apiresource.reject","apiresource 拒绝"},
-                            { "apiresource.upload","apiresource 上传"},
+                            { "all","所有接口权限"},
                         }
                     });
 
@@ -258,6 +214,9 @@ namespace IdentityServer4.MicroService.ApiResource
                 o.ReportApiVersions = true;
             });
             #endregion
+
+            services.Configure<ApiTrackerSetting>(Configuration.GetSection("ApiTrackerSetting"));
+            services.AddScoped<ApiTracker.ApiTracker>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
