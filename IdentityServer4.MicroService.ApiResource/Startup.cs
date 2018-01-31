@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Reflection;
 using ApiTracker;
 using IdentityServer4.AccessTokenValidation;
@@ -13,6 +14,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.PlatformAbstractions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using Swashbuckle.AspNetCore.Swagger;
@@ -152,6 +154,10 @@ namespace IdentityServer4.MicroService.ApiResource
                         Description = "Swagger document"
                     });
                 }
+
+                var filePath = Path.Combine(PlatformServices.Default.Application.ApplicationBasePath, assemblyName + ".xml");
+
+                c.IncludeXmlComments(filePath);
             });
             #endregion
 
