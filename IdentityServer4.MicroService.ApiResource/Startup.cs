@@ -123,7 +123,7 @@ namespace IdentityServer4.MicroService.ApiResource
                         Scopes = new Dictionary<string, string>(){
                             { "openid","用户标识" },
                             { "profile","用户资料" },
-                            { "all","所有接口权限"},
+                            { MicroServiceName + ".all","所有接口权限"},
                         }
                     });
 
@@ -239,7 +239,6 @@ namespace IdentityServer4.MicroService.ApiResource
 
             app.UseAuthentication();
 
-            
             app.UseMvcWithDefaultRoute();
 
             #region swagger

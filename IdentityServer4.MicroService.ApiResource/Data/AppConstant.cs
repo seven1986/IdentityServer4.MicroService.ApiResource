@@ -35,30 +35,30 @@ namespace IdentityServer4.MicroService.ApiResource.Data
         /// 字段值：策略的名称
         /// 字段自定义属性：策略的权限集合，
         /// 聚合PolicyClaimValues所有的值（除了"all"），去重后登记到IdentityServer的ApiResource中去
-        /// 例如PolicyClaimValues("apiresource.create", "apiresource.all", "all"),代表
-        /// 当前apiresource项目的create权限，或者 apiresource.all权限，或者all权限
+        /// 例如PolicyClaimValues("apiresource.create", "apiresource.all"),代表
+        /// 当前apiresource项目的create权限，或者 apiresource.all权限
         /// </summary>
         public class ClientScopes
         {
-            [PolicyClaimValues(MicroServiceName + ".create", MicroServiceName + ".all", "all")]
+            [PolicyClaimValues(MicroServiceName + ".create", MicroServiceName + ".all")]
             public const string Create = "scope:create";
 
-            [PolicyClaimValues(MicroServiceName + ".read", MicroServiceName + ".all", "all")]
+            [PolicyClaimValues(MicroServiceName + ".read", MicroServiceName + ".all")]
             public const string Read = "scope:read";
 
-            [PolicyClaimValues(MicroServiceName + ".update", MicroServiceName + ".all", "all")]
+            [PolicyClaimValues(MicroServiceName + ".update", MicroServiceName + ".all")]
             public const string Update = "scope:update";
 
-            [PolicyClaimValues(MicroServiceName + ".delete", MicroServiceName + ".all", "all")]
+            [PolicyClaimValues(MicroServiceName + ".delete", MicroServiceName + ".all")]
             public const string Delete = "scope:delete";
 
-            [PolicyClaimValues(MicroServiceName + ".approve", MicroServiceName + ".all", "all")]
+            [PolicyClaimValues(MicroServiceName + ".approve", MicroServiceName + ".all")]
             public const string Approve = "scope:approve";
 
-            [PolicyClaimValues(MicroServiceName + ".reject", MicroServiceName + ".all", "all")]
+            [PolicyClaimValues(MicroServiceName + ".reject", MicroServiceName + ".all")]
             public const string Reject = "scope:reject";
 
-            [PolicyClaimValues(MicroServiceName + ".upload", MicroServiceName + ".all", "all")]
+            [PolicyClaimValues(MicroServiceName + ".upload", MicroServiceName + ".all")]
             public const string Upload = "scope:upload";
         }
 
@@ -71,25 +71,25 @@ namespace IdentityServer4.MicroService.ApiResource.Data
         /// </summary>
         public class UserPermissions
         {
-            [PolicyClaimValues(MicroServiceName + ".create", MicroServiceName + ".all", "all")]
+            [PolicyClaimValues(MicroServiceName + ".create", "all")]
             public const string Create = "permission:create";
 
-            [PolicyClaimValues(MicroServiceName + ".read", MicroServiceName + ".all", "all")]
+            [PolicyClaimValues(MicroServiceName + ".read", "all")]
             public const string Read = "permission:read";
 
-            [PolicyClaimValues(MicroServiceName + ".update", MicroServiceName + ".all", "all")]
+            [PolicyClaimValues(MicroServiceName + ".update", "all")]
             public const string Update = "permission:update";
 
-            [PolicyClaimValues(MicroServiceName + ".delete", MicroServiceName + ".all", "all")]
+            [PolicyClaimValues(MicroServiceName + ".delete", "all")]
             public const string Delete = "permission:delete";
 
-            [PolicyClaimValues(MicroServiceName + ".approve", MicroServiceName + ".all", "all")]
+            [PolicyClaimValues(MicroServiceName + ".approve", "all")]
             public const string Approve = "permission:approve";
 
-            [PolicyClaimValues(MicroServiceName + ".reject", MicroServiceName + ".all", "all")]
+            [PolicyClaimValues(MicroServiceName + ".reject", "all")]
             public const string Reject = "permission:reject";
 
-            [PolicyClaimValues(MicroServiceName + ".upload", MicroServiceName + ".all", "all")]
+            [PolicyClaimValues(MicroServiceName + ".upload", "all")]
             public const string Upload = "permission:upload";
         }
 
