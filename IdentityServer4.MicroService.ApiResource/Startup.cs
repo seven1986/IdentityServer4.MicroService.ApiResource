@@ -1,8 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Reflection;
-using ApiTracker;
 using IdentityServer4.AccessTokenValidation;
 using IdentityServer4.MicroService.ApiResource.Services;
 using Microsoft.AspNetCore.Builder;
@@ -18,7 +19,7 @@ using Microsoft.Extensions.PlatformAbstractions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using Swashbuckle.AspNetCore.Swagger;
-using static IdentityServer4.MicroService.ApiResource.Data.AppConstant;
+using static IdentityServer4.MicroService.ApiResource.MicroserviceConfig;
 
 namespace IdentityServer4.MicroService.ApiResource
 {
@@ -84,7 +85,28 @@ namespace IdentityServer4.MicroService.ApiResource
                     var permissionValues = permission.GetCustomAttribute<PolicyClaimValuesAttribute>().ClaimsValues;
 
                     options.AddPolicy(permissionName,
-                        policy => policy.RequireClaim(ClaimTypes.UserPermission, permissionValues));
+                        policy => policy.RequireAssertion(context =>
+                        {
+                            var userPermissionClaim = context.User.Claims.FirstOrDefault(c => c.Type.Equals(ClaimTypes.UserPermission));
+
+                            if (userPermissionClaim != null && !string.IsNullOrWhiteSpace(userPermissionClaim.Value))
+                            {
+                                var userPermissionClaimValue = userPermissionClaim.Value.ToLower().Split(new string[] { "," }, StringSplitOptions.RemoveEmptyEntries);
+
+                                if (userPermissionClaimValue != null && userPermissionClaimValue.Length > 0)
+                                {
+                                    foreach (var userPermissionItem in userPermissionClaimValue)
+                                    {
+                                        if (permissionValues.Contains(userPermissionItem))
+                                        {
+                                            return true;
+                                        }
+                                    }
+                                }
+                            }
+
+                            return false;
+                        }));
                 }
                 #endregion
             });
@@ -113,7 +135,6 @@ namespace IdentityServer4.MicroService.ApiResource
                         Description = "从身份认证中心颁发的Token，根据接口要求决定是否传入。",
                     });
 
-
                 c.AddSecurityDefinition("OAuth2",
                     new OAuth2Scheme()
                     {
@@ -125,7 +146,7 @@ namespace IdentityServer4.MicroService.ApiResource
                         Scopes = new Dictionary<string, string>(){
                             { "openid","用户标识" },
                             { "profile","用户资料" },
-                            { MicroServiceName + ".all","所有接口权限"},
+                            { MicroServiceName+ ".all","所有接口权限"},
                         }
                     });
 
@@ -138,20 +159,20 @@ namespace IdentityServer4.MicroService.ApiResource
                 {
                     c.SwaggerDoc(description.GroupName, new Info
                     {
-                        Title = assemblyName + description.ApiVersion,
+                        Title = assemblyName,
                         Version = description.ApiVersion.ToString(),
                         License = new License()
                         {
                             Name = "MIT",
                             Url = "https://spdx.org/licenses/MIT.html"
                         },
-                        Contact = new Contact()
-                        {
-                            Url = "",
-                            Name = "",
-                            Email = ""
-                        },
-                        Description = "Swagger document"
+                        // Contact = new Contact()
+                        // {
+                        //     Url = "",
+                        //     Name = "",
+                        //     Email = ""
+                        // },
+                        // Description = "Swagger document",
                     });
                 }
 
@@ -207,6 +228,7 @@ namespace IdentityServer4.MicroService.ApiResource
                 // for production, microsoft authentication need https
                 options.Filters.Add(new RequireHttpsAttribute());
             })
+            // .AddViewLocalization(LanguageViewLocationExpanderFormat.Suffix)
             .AddDataAnnotationsLocalization()
             //https://stackoverflow.com/questions/34753498/self-referencing-loop-detected-in-asp-net-core
             .AddJsonOptions(options =>
@@ -219,10 +241,8 @@ namespace IdentityServer4.MicroService.ApiResource
                 o.AssumeDefaultVersionWhenUnspecified = true;
                 o.ReportApiVersions = true;
             });
-            #endregion
 
-            services.Configure<ApiTrackerSetting>(Configuration.GetSection("ApiTrackerSetting"));
-            services.AddScoped<ApiTracker.ApiTracker>();
+            #endregion
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -253,11 +273,9 @@ namespace IdentityServer4.MicroService.ApiResource
                 x.PreSerializeFilters.Add((doc, req) =>
                 {
                     doc.Schemes = new[] { "https" };
-
-                    doc.Host = Configuration["IdentityServer"];
+                    doc.Host = Configuration["ApplicationHost"];
                 });
             });
-            #endregion
 
             app.UseSwaggerUI(c =>
             {
@@ -267,11 +285,14 @@ namespace IdentityServer4.MicroService.ApiResource
                         $"/swagger/{description.GroupName}/swagger.json",
                         description.GroupName.ToUpperInvariant());
 
-                    c.ConfigureOAuth2("test", "1", string.Empty, "API测试专用");
+                    c.OAuthClientId(AppDefaultData.TestClient.ClientId);
+                    c.OAuthClientSecret(AppDefaultData.TestClient.ClientSecret);
+                    c.OAuthAppName(AppDefaultData.TestClient.ClientName);
                 }
 
-                c.DocExpansion("none");
+                c.DocExpansion(DocExpansion.None);
             });
+            #endregion
         }
     }
 }
