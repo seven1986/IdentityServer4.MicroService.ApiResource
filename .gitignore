@@ -5,3 +5,7 @@
 /.vs
 /IdentityServer4.MicroService.ApiResource/bin/Debug/netcoreapp2.0
 /IdentityServer4.MicroService.ApiResource/obj
+/IdentityServer4.MicroService.ApiResource/bin
+/IdentityServer4.MicroService.ApiResource/Properties/PublishProfiles
+/IdentityServer4.MicroService.ApiResource/appsettings.Production.json
+/IdentityServer4.MicroService.ApiResource/IdentityServer4.MicroService.ApiResource.csproj.user

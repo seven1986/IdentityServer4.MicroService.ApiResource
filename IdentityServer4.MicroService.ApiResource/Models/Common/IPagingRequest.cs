@@ -2,7 +2,7 @@
 
 namespace IdentityServer4.MicroService.ApiResource.Models.Common
 {
-   public interface IPagingRequest
+    public interface IPagingRequest
     {
         bool? asc { get; set; }
 

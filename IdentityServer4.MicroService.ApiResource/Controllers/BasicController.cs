@@ -9,8 +9,6 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data.Common;
-using System.Data.SqlClient;
 using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography;
@@ -21,13 +19,31 @@ namespace IdentityServer4.MicroService.ApiResource.Controllers
     [Authorize]
     public class BasicController : ControllerBase
     {
+        /// <summary>
+        /// 数据库
+        /// </summary>
         public virtual DbContext db { get; set; }
+
+        /// <summary>
+        /// 全球化
+        /// </summary>
         public virtual IStringLocalizer l { get; set; }
+
+        /// <summary>
+        /// 日志
+        /// </summary>
         public virtual ILogger log { get; set; }
 
+        /// <summary>
+        /// 随机数
+        /// </summary>
         protected readonly Random random = new Random(DateTime.UtcNow.Second);
 
-        protected string ModelStateErrors()
+        /// <summary>
+        /// 获取入参错误信息
+        /// </summary>
+        /// <returns></returns>
+        protected string ModelErrors()
         {
             var errObject = new JObject();
 
@@ -46,6 +62,7 @@ namespace IdentityServer4.MicroService.ApiResource.Controllers
             return JsonConvert.SerializeObject(errObject);
         }
 
+        #region Token Claims
         Dictionary<string, string> _UserClaims;
         Dictionary<string, string> UserClaims
         {
@@ -69,28 +86,20 @@ namespace IdentityServer4.MicroService.ApiResource.Controllers
                 return _UserClaims;
             }
         }
-
         protected long UserId
         {
             get
             {
                 return long.Parse(UserClaims["sub"]);
             }
-        }
-
-        protected string Lineage
-        {
-            get
-            {
-                return UserClaims["lineage"];
-            }
-        }
+        } 
+        #endregion
 
         /// <summary>
         /// 生成MD5
         /// </summary>
         /// <returns></returns>
-        protected string _MD5(String str)
+        protected string MD5String(String str)
         {
             var md5 = new MD5CryptoServiceProvider();
             var bs = Encoding.UTF8.GetBytes(str);
@@ -137,47 +146,6 @@ namespace IdentityServer4.MicroService.ApiResource.Controllers
             }
 
             return result;
-        }
-
-        protected object ExecuteScalar(string sql, params SqlParameter[] sqlparams)
-        {
-            using (var connection = db.Database.GetDbConnection())
-            {
-                connection.Open();
-
-                using (var command = connection.CreateCommand())
-                {
-                    command.CommandText = sql;
-
-                    command.Parameters.AddRange(sqlparams);
-
-                    return command.ExecuteScalar();
-                }
-            }
-        }
-
-        protected void ExecuteReader(string sql, Action<DbDataReader> action, params SqlParameter[] sqlparams)
-        {
-            using (var connection = db.Database.GetDbConnection())
-            {
-                connection.Open();
-
-                using (var command = connection.CreateCommand())
-                {
-                    command.CommandText = sql;
-
-                    command.Parameters.AddRange(sqlparams);
-
-
-                    using (var reader = command.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-
-                        }
-                    }
-                }
-            }
         }
     }
 }

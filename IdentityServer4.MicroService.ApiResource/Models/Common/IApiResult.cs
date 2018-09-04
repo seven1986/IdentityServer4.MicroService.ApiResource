@@ -1,6 +1,6 @@
 ﻿namespace IdentityServer4.MicroService.ApiResource.Models.Common
 {
-   public interface IApiResult<T>
+    public interface IApiResult<T>
     {
         int code { get; set; }
 

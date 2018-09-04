@@ -5,7 +5,7 @@ using IdentityServer4.MicroService.ApiResource.Enums;
 
 namespace IdentityServer4.MicroService.ApiResource.Models.Common
 {
-    public class ApiResult<T>:IApiResult<T>
+    public class ApiResult<T> : IApiResult<T>
     {
         /// <summary>
         /// 代码

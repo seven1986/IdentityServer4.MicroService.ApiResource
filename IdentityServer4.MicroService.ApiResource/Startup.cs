@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using IdentityServer4.AccessTokenValidation;
+using IdentityServer4.MicroService.ApiResource.Attributes;
 using IdentityServer4.MicroService.ApiResource.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -223,12 +224,8 @@ namespace IdentityServer4.MicroService.ApiResource
 
             services.AddMvc(options =>
             {
-                // for external authentication,maybe not need
-                //options.SslPort = 44314;
-                // for production, microsoft authentication need https
                 options.Filters.Add(new RequireHttpsAttribute());
             })
-            // .AddViewLocalization(LanguageViewLocationExpanderFormat.Suffix)
             .AddDataAnnotationsLocalization()
             //https://stackoverflow.com/questions/34753498/self-referencing-loop-detected-in-asp-net-core
             .AddJsonOptions(options =>
@@ -237,11 +234,11 @@ namespace IdentityServer4.MicroService.ApiResource
                 options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
             });
 
-            services.AddApiVersioning(o => {
+            services.AddApiVersioning(o =>
+            {
                 o.AssumeDefaultVersionWhenUnspecified = true;
                 o.ReportApiVersions = true;
             });
-
             #endregion
         }
 
@@ -263,6 +260,8 @@ namespace IdentityServer4.MicroService.ApiResource
                 app.UseDeveloperExceptionPage();
             }
 
+            app.UseStaticFiles();
+
             app.UseAuthentication();
 
             app.UseMvcWithDefaultRoute();
@@ -274,6 +273,15 @@ namespace IdentityServer4.MicroService.ApiResource
                 {
                     doc.Schemes = new[] { "https" };
                     doc.Host = Configuration["ApplicationHost"];
+                    doc.Security = new List<IDictionary<string, IEnumerable<string>>>()
+                    {
+                        new Dictionary<string, IEnumerable<string>>()
+                        {
+                            { "SubscriptionKey", new string[]{ } },
+                            { "AccessToken", new string[]{ } },
+                            { "OAuth2", new string[]{ } },
+                        }
+                    };
                 });
             });
 
@@ -288,6 +296,7 @@ namespace IdentityServer4.MicroService.ApiResource
                     c.OAuthClientId(AppDefaultData.TestClient.ClientId);
                     c.OAuthClientSecret(AppDefaultData.TestClient.ClientSecret);
                     c.OAuthAppName(AppDefaultData.TestClient.ClientName);
+                    c.OAuth2RedirectUrl(string.Format(AppDefaultData.TestClient.RedirectUris[0], Configuration["ApplicationHost"]));
                 }
 
                 c.DocExpansion(DocExpansion.None);

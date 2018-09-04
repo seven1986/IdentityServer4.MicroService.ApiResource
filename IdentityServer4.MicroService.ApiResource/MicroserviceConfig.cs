@@ -1,6 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
+﻿using System.ComponentModel;
+using IdentityServer4.MicroService.ApiResource.Attributes;
+
 namespace IdentityServer4.MicroService.ApiResource
 {
     public class MicroserviceConfig
@@ -12,74 +12,54 @@ namespace IdentityServer4.MicroService.ApiResource
 
         /// <summary>
         /// Client权限定义
-        /// 对应Token中的claim的scope字段
-        /// 字段名：用于controller 的 action 标记
-        /// 字段值：策略的名称
-        /// 字段自定义属性：策略的权限集合，
-        /// 聚合PolicyClaimValues所有的值（除了"all"），去重后登记到IdentityServer的ApiResource中去
-        /// 例如PolicyClaimValues("id4.ms.create", "id4.ms.all", "all"),代表
-        /// 当前id4.ms项目的create权限，或者 id4.ms.all权限，或者all权限
+        /// 验证权限时，会根据request.token.claims.permission判断
+        /// 定义说明：
+        /// 1，描述：
+        ///     controller中文名称 - action中文名称
+        /// 2，字段名：
+        ///     跟controller 的 action 保持一直
+        /// 3，字段值：
+        ///     scope: {controller的action小写}
+        /// 4，字段自定义属性：
+        ///     [PolicyClaimValues(MicroServiceName + ".{controller的action小写}", MicroServiceName + ".all")]
         /// </summary>
         public class ClientScopes
         {
-            [Description("创建")]
-            [PolicyClaimValues(MicroServiceName + ".create", MicroServiceName + ".all")]
-            public const string Create = "scope:create";
-
-            [Description("读取")]
+            #region 验证使用方式示例
+            [Description("验证使用方式示例 - 读取")]
             [PolicyClaimValues(MicroServiceName + ".read", MicroServiceName + ".all")]
             public const string Read = "scope:read";
 
-            [Description("更新")]
-            [PolicyClaimValues(MicroServiceName + ".update", MicroServiceName + ".all")]
-            public const string Update = "scope:update";
-
-            [Description("删除")]
-            [PolicyClaimValues(MicroServiceName + ".delete", MicroServiceName + ".all")]
-            public const string Delete = "scope:delete";
-
-            [Description("批准")]
-            [PolicyClaimValues(MicroServiceName + ".approve", MicroServiceName + ".all")]
-            public const string Approve = "scope:approve";
-
-            [Description("拒绝")]
-            [PolicyClaimValues(MicroServiceName + ".reject", MicroServiceName + ".all")]
-            public const string Reject = "scope:reject";
-
-            [Description("上传")]
-            [PolicyClaimValues(MicroServiceName + ".upload", MicroServiceName + ".all")]
-            public const string Upload = "scope:upload";
+            [Description("验证使用方式示例 - 取钱")]
+            [PolicyClaimValues(MicroServiceName + ".withdrawmoney", MicroServiceName + ".all")]
+            public const string WithdrawMoney = "scope:withdrawmoney";
+            #endregion
         }
 
         /// <summary>
         /// User权限定义
-        /// 对应Token中的claim的permission字段
-        /// 字段名：用于controller 的 action 标记
-        /// 字段值：策略的名称
-        /// 字段自定义属性：策略的权限集合，可按需设置User表的claims的permission属性
+        /// 验证权限时，会根据request.token.claims.permission判断
+        /// 定义说明：
+        /// 1，描述：
+        ///     controller中文名称 - action中文名称
+        /// 2，字段名：
+        ///     跟controller 的 action 保持一直
+        /// 3，字段值：
+        ///     permission: controller的action小写
+        /// 4，字段自定义属性：
+        ///     [PolicyClaimValues(MicroServiceName + ".{controller的action小写}", MicroServiceName + ".all")]
         /// </summary>
         public class UserPermissions
         {
-            [PolicyClaimValues(MicroServiceName + ".create", MicroServiceName + ".all")]
-            public const string Create = "permission:create";
-
+            #region 验证使用方式示例
+            [Description("验证使用方式示例 - 读取")]
             [PolicyClaimValues(MicroServiceName + ".read", MicroServiceName + ".all")]
             public const string Read = "permission:read";
 
-            [PolicyClaimValues(MicroServiceName + ".update", MicroServiceName + ".all")]
-            public const string Update = "permission:update";
-
-            [PolicyClaimValues(MicroServiceName + ".delete", MicroServiceName + ".all")]
-            public const string Delete = "permission:delete";
-
-            [PolicyClaimValues(MicroServiceName + ".approve", MicroServiceName + ".all")]
-            public const string Approve = "permission:approve";
-
-            [PolicyClaimValues(MicroServiceName + ".reject", MicroServiceName + ".all")]
-            public const string Reject = "permission:reject";
-
-            [PolicyClaimValues(MicroServiceName + ".upload", MicroServiceName + ".all")]
-            public const string Upload = "permission:upload";
+            [Description("验证使用方式示例 - 取钱")]
+            [PolicyClaimValues(MicroServiceName + ".withdrawmoney", MicroServiceName + ".all")]
+            public const string WithdrawMoney = "permission:withdrawmoney";
+            #endregion
         }
 
         /// <summary>
@@ -126,19 +106,6 @@ namespace IdentityServer4.MicroService.ApiResource
             /// for client
             /// </summary>
             public const string ClientScope = "scope";
-        }
-    }
-
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Parameter, AllowMultiple = false)]
-    public class PolicyClaimValuesAttribute : Attribute
-    {
-        public string[] ClaimsValues { get; set; }
-
-        public PolicyClaimValuesAttribute() { }
-
-        public PolicyClaimValuesAttribute(params string[] ClaimsValues)
-        {
-            this.ClaimsValues = ClaimsValues;
         }
     }
 }
