@@ -29,8 +29,13 @@
 
 
 #### 设计参考文档
-https://docs.microsoft.com/zh-cn/azure/architecture/best-practices/api-design
-https://github.com/Microsoft/api-guidelines/blob/master/Guidelines.md
-http://restcookbook.com/
-https://mathieu.fenniak.net/the-api-checklist/
-https://docs.microsoft.com/zh-cn/azure/architecture/best-practices/api-implementation#more-information
+  
+  - https://docs.microsoft.com/zh-cn/azure/architecture/best-practices/api-design
+  
+  - https://github.com/Microsoft/api-guidelines/blob/master/Guidelines.md
+  
+  - http://restcookbook.com/
+  
+  - https://mathieu.fenniak.net/the-api-checklist/
+  
+  - https://docs.microsoft.com/zh-cn/azure/architecture/best-practices/api-implementation#more-information
