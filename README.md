@@ -1,6 +1,9 @@
 # 说明
 微服务项目示例。
 
+https://webapplication420180903114128.chinacloudsites.cn/swagger/index.html
+
+
 #### 主要特性（自定义权限、多语言、多版本、入参/出参统一格式）
 
 ![swagger](swagger.png)
