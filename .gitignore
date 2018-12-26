@@ -9,3 +9,7 @@
 /IdentityServer4.MicroService.ApiResource/Properties/PublishProfiles
 /IdentityServer4.MicroService.ApiResource/appsettings.Production.json
 /IdentityServer4.MicroService.ApiResource/IdentityServer4.MicroService.ApiResource.csproj.user
+/IdentityServer4.MicroService.Api/obj
+/Host/obj
+/Host/bin/Debug/netcoreapp2.2
+/Host/Host.csproj.user
