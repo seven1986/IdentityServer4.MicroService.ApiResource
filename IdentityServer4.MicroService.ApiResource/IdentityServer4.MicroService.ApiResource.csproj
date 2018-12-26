@@ -11,6 +11,7 @@
     <PackageProjectUrl>https://github.com/seven1986/IdentityServer4.MicroService.ApiResource</PackageProjectUrl>
     <RepositoryUrl>https://github.com/seven1986/IdentityServer4.MicroService.ApiResource</RepositoryUrl>
     <PackageTags>IdentityServer4 MicroService AzureApiManagement</PackageTags>
+    <PackageId>IdentityServer4MicroService.ApiResource</PackageId>
   </PropertyGroup>
 
   <ItemGroup>
