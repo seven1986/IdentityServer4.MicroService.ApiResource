@@ -9,13 +9,21 @@ public void ConfigureServices(IServiceCollection services)
         {
 services.AddMicroService(new MicroserviceOptions()
             {
+                // 微服务名称
                 MicroServiceName = "apiresource",
 
+                // 固定写法
+                // 然后设置项目——生成——勾选生成项目xml文件
                 AssemblyName = Assembly.GetExecutingAssembly().GetName().Name,
 
+                // 启用API权限验证
+                AuthorizationPolicy = true,
                 Scopes = typeof(ClientScopes),
-
-                Permissions = typeof(UserPermissions)
+                Permissions = typeof(UserPermissions)，
+                
+                // 缓存SQL数据库链接地址，为空将不会启用
+                // 初始化：dotnet sql-cache create {sqlConnection} dbo AppCache
+                SQLCacheConnection = Configuration.GetConnectionString("DefaultConnection")
             });
                 //...
           }
@@ -53,15 +61,18 @@ services.AddMicroService(new MicroserviceOptions()
 
     参照Resources/Controllers结构添加即可,名称必须与controller对应
 
-#### 微服务配置（在MicroserviceConfig.cs文件）
-
+#### API权限配置 1，
+  （参考Host项目的MicroserviceConfig.cs文件）
   * Client权限定义：ClientScopes Class
-
   * User权限定义：UserPermissions Class
 
-#### 其他配置（appsettings.json）
-    * IdentityServer：
-        identityserver4授权中心的服务器地址，如：ids.ixingban.com
+#### API权限配置 2，
+微服务模式，将API连接到IdentityServer4，配置appsettings.json文件
+```json
+{
+  IdentityServer:"identityserver4地址"
+}
+```
 
 #### 数据库配置
 
