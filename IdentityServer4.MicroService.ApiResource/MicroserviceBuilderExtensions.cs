@@ -94,6 +94,11 @@ namespace Microsoft.AspNetCore.Builder
                     });
             }
 
+            if (options.EnableResponseCaching)
+            {
+                app.UseResponseCaching();
+            }
+
             return app;
         }
     }

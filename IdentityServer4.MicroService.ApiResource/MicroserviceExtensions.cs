@@ -289,8 +289,26 @@ namespace Microsoft.Extensions.DependencyInjection
                 o.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
             });
 
+            builder.Services.AddSingleton<AzureStorageService>();
+
+            builder.Services.AddTransient<EmailService>();
+
+            builder.Services.AddResponseCaching();
+
+            if (!string.IsNullOrWhiteSpace(options.SQLCacheConnection))
+            {
+                builder.Services.AddDistributedSqlServerCache(x =>
+                {
+                    x.ConnectionString = options.SQLCacheConnection;
+                    x.SchemaName = "dbo";
+                    x.TableName = "AppCache";
+                });
+            }
+
             return builder;
         }
+
+       
     }
 
     public interface IMicroserviceBuilder

@@ -73,6 +73,17 @@ namespace IdentityServer4.MicroService.ApiResource
         /// 用户权限
         /// </summary>
         public Type Permissions { get; set; }
+
+        /// <summary>
+        /// 启用缓存
+        /// </summary>
+        public bool EnableResponseCaching { get; set; } = true;
+
+        /// <summary>
+        /// 启用缓存的SQL数据库链接
+        /// </summary>
+        public string SQLCacheConnection { get; set; }
+
     }
 
     public class ClaimTypes
