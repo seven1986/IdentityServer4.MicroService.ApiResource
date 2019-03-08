@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.2</TargetFramework>
-    <Version>0.0.39</Version>
+    <Version>0.0.40</Version>
     <Authors>seven1986</Authors>
     <Company>seven1986</Company>
     <Copyright>https://github.com/seven1986/IdentityServer4.MicroService/blob/master/LICENSE</Copyright>

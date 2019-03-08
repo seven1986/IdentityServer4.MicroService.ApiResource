@@ -31,7 +31,16 @@ namespace IdentityServer4.MicroService.ApiResource
         [Description("未找到内容")]
         NotFound = 404,
 
+        /// <summary>
+        /// 无权限进行操作
+        /// </summary>
         [Description("无权限进行操作")]
         NoPermission = 401,
+
+        /// <summary>
+        /// 错误的请求
+        /// </summary>
+        [Description("错误的请求")]
+        HasError = 400,
     }
 }
