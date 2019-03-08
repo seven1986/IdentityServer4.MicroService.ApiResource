@@ -1,9 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography;
@@ -14,7 +17,7 @@ namespace IdentityServer4.MicroService.ApiResource
     [ApiController]
     [Route("[controller]")]
     [Produces("application/json")]
-    public class BasicController : ControllerBase
+    public class BasicApiController : ControllerBase
     {
         /// <summary>
         /// 全球化
@@ -111,6 +114,31 @@ namespace IdentityServer4.MicroService.ApiResource
             }
 
             return result;
+        }
+
+        protected void SetAppSettings(IHostingEnvironment _hostingEnvironment, Action<JObject> _update)
+        {
+            var appSettings = "appsettings." + (!_hostingEnvironment.IsDevelopment() ? "Production." : "") + "json";
+
+            appSettings = $"{_hostingEnvironment.ContentRootPath}/{appSettings}";
+
+            var appSettingsString = string.Empty;
+
+            using (var sr = new StreamReader(appSettings, Encoding.UTF8))
+            {
+                appSettingsString = sr.ReadToEnd();
+            }
+
+            var JsonObject = JsonConvert.DeserializeObject<JObject>(appSettingsString);
+
+            _update.Invoke(JsonObject);
+
+            appSettingsString = JsonObject.ToString();
+
+            using (var sw = new StreamWriter(appSettings, false, Encoding.UTF8))
+            {
+                sw.WriteLine(appSettingsString);
+            }
         }
     }
 }
