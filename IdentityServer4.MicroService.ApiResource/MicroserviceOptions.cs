@@ -65,6 +65,11 @@ namespace IdentityServer4.MicroService.ApiResource
         public string SwaggerUIClientSecret { get; set; } = "1";
 
         /// <summary>
+        /// 启用WebEncoders
+        /// </summary>
+        public bool WebEncoders { get; set; } = true;
+
+        /// <summary>
         /// 客户端权限
         /// </summary>
         public Type Scopes { get; set; }

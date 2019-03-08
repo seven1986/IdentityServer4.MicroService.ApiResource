@@ -13,6 +13,8 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text.Encodings.Web;
+using System.Text.Unicode;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
@@ -214,14 +216,14 @@ namespace Microsoft.Extensions.DependencyInjection
                                 Name = "MIT",
                                 Url = "https://spdx.org/licenses/MIT.html"
                             },
-                        // Contact = new Contact()
-                        // {
-                        //     Url = "",
-                        //     Name = "",
-                        //     Email = ""
-                        // },
-                        // Description = "Swagger document",
-                    });
+                            // Contact = new Contact()
+                            // {
+                            //     Url = "",
+                            //     Name = "",
+                            //     Email = ""
+                            // },
+                            // Description = "Swagger document",
+                        });
                     }
 
                     var filePath = Path.Combine(PlatformServices.Default.Application.ApplicationBasePath, options.AssemblyName + ".xml");
@@ -277,6 +279,14 @@ namespace Microsoft.Extensions.DependencyInjection
                 {
                     o.AssumeDefaultVersionWhenUnspecified = true;
                     o.ReportApiVersions = true;
+                });
+            }
+
+            if (options.WebEncoders)
+            {
+                services.AddWebEncoders(opt =>
+                {
+                    opt.TextEncoderSettings = new TextEncoderSettings(UnicodeRanges.All);
                 });
             }
 
