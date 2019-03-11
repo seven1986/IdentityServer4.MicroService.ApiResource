@@ -166,6 +166,8 @@ namespace Microsoft.Extensions.DependencyInjection
             {
                 builder.Services.AddSwaggerGen(c =>
                 {
+                    c.EnableAnnotations();
+
                     c.AddSecurityDefinition("SubscriptionKey",
                         new ApiKeyScheme()
                         {
@@ -224,6 +226,8 @@ namespace Microsoft.Extensions.DependencyInjection
                             // },
                             // Description = "Swagger document",
                         });
+
+                        c.CustomSchemaIds(x => x.FullName);
                     }
 
                     var filePath = Path.Combine(PlatformServices.Default.Application.ApplicationBasePath, options.AssemblyName + ".xml");
