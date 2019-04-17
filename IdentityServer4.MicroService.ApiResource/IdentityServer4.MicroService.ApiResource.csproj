@@ -1,17 +1,22 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.2</TargetFramework>
     <Version>0.1.45</Version>
     <Authors>seven1986</Authors>
     <Company>seven1986</Company>
-    <Copyright>https://github.com/seven1986/IdentityServer4.MicroService/blob/master/LICENSE</Copyright>
-    <PackageLicenseUrl>https://github.com/seven1986/IdentityServer4.MicroService.ApiResource</PackageLicenseUrl>
+    <Copyright></Copyright>
+    <PackageLicenseUrl></PackageLicenseUrl>
     <PackageIconUrl>https://raw.githubusercontent.com/seven1986/IdentityServer4.MicroService/master/id4ms.png</PackageIconUrl>
     <PackageProjectUrl>https://github.com/seven1986/IdentityServer4.MicroService.ApiResource</PackageProjectUrl>
     <RepositoryUrl>https://github.com/seven1986/IdentityServer4.MicroService.ApiResource</RepositoryUrl>
     <PackageTags>IdentityServer4 MicroService AzureApiManagement</PackageTags>
     <PackageId>IdentityServer4MicroService.ApiResource</PackageId>
+    <!--
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <license type="expression">Apache-2.0</license>
+    sphinx-autobuild . _build/
+    -->
   </PropertyGroup>
 
   <ItemGroup>
