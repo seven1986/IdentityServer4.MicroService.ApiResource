@@ -1,8 +1,11 @@
 ﻿using IdentityServer4.AccessTokenValidation;
 using IdentityServer4.MicroService.ApiResource;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
+using Microsoft.AspNetCore.Mvc.Razor;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.PlatformAbstractions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
@@ -24,149 +27,145 @@ namespace Microsoft.Extensions.DependencyInjection
         /// Creates a builder.
         /// </summary>
         /// <param name="services">The services.</param>
-        /// <returns></returns>
-        public static IMicroserviceBuilder AddMicroServiceBuilder(this IServiceCollection services)
-        {
-            return new MicroserviceBuilder(services);
-        }
-
-        /// <summary>
-        /// Creates a builder.
-        /// </summary>
-        /// <param name="services">The services.</param>
         /// <param name="configuration">The config.</param>
         /// <returns></returns>
         public static IMicroserviceBuilder AddMicroService(
             this IServiceCollection services,
-            MicroserviceOptions options)
+            IConfiguration configuration,
+            Action<MicroserviceOptions> msOptions = null)
         {
-            var builder = services.AddMicroServiceBuilder();
+            var Options = new MicroserviceOptions();
 
-            if (!string.IsNullOrWhiteSpace(options.MicroServiceName))
+            if (msOptions != null)
             {
-                options.MicroServiceName = options.MicroServiceName.ToLower().Trim();
-            }
-            else
-            {
-                options.MicroServiceName = options.AssemblyName.ToLower().Trim();
+                msOptions.Invoke(Options);
             }
 
-            builder.Services.AddSingleton(options);
-
-            if (options.Cors)
+            if (string.IsNullOrWhiteSpace(Options.MicroServiceName))
             {
-                builder.Services.AddCors(o =>
+                throw new Exception("Not config MicroServiceName");
+            }
+
+            var builder = new MicroserviceBuilder(services);
+
+            builder.Services.AddSingleton(Options);
+
+            #region Cors
+            if (Options.EnableCors)
+            {
+                builder.Services.AddCors(options =>
                 {
-                    o.AddPolicy("default", b =>
+                    options.AddPolicy("cors-allowanonymous", x =>
                     {
-                        b.AllowAnyHeader();
-                        b.AllowAnyMethod();
-                        b.AllowAnyOrigin();
-                        b.AllowCredentials();
+                        x.AllowAnyHeader();
+                        x.AllowAnyMethod();
+                        x.AllowAnyOrigin();
+                        x.AllowCredentials();
                     });
                 });
             }
+            #endregion
 
-            if (options.IdentityServer != null)
+            #region WebEncoders
+            if (Options.EnableWebEncoders)
             {
-                builder.Services.AddAuthentication(IdentityServerAuthenticationDefaults.AuthenticationScheme)
-                        .AddIdentityServerAuthentication(o =>
-                        {
-                            o.Authority = options.IdentityServer.Scheme + options.IdentityServer.Host;
-                            o.ApiName = options.MicroServiceName;
-                        });
-            }
-
-            if (options.AuthorizationPolicy)
-            {
-                builder.Services.AddAuthorization(o =>
+                services.AddWebEncoders(opt =>
                 {
-                    #region Client的权限策略
-                    var scopes = options.Scopes.GetFields();
+                    opt.TextEncoderSettings = new TextEncoderSettings(UnicodeRanges.All);
+                });
+            }
+            #endregion
 
-                    foreach (var scope in scopes)
+            #region AuthorizationPolicy
+            if (Options.EnableAuthorizationPolicy)
+            {
+                builder.Services.AddAuthorization(options =>
+                {
+                    var MSTypes = Assembly.GetExecutingAssembly().GetTypes()
+                    .Where(x => x.BaseType != null && x.BaseType.Name.Equals("BasicController")).ToList();
+
+                    var isms_policies = PolicyConfigs(MSTypes);
+
+                    var EntryTypes = Assembly.GetEntryAssembly().GetTypes()
+                       .Where(x => x.BaseType != null && x.BaseType.Name.Equals("ControllerBase")).ToList();
+
+                    var entry_policies = PolicyConfigs(EntryTypes);
+
+                    if (entry_policies.Count > 0)
                     {
-                        var scopeName = scope.GetRawConstantValue().ToString();
-
-                        var scopeItem = scope.GetCustomAttribute<PolicyClaimValuesAttribute>();
-
-                        var scopeValues = scopeItem.PolicyValues;
-
-                        var scopeValuesList = new List<string>();
-
-                        for (var i = 0; i < scopeValues.Length; i++)
-                        {
-                            scopeValues[i] = options.MicroServiceName + "." + scopeValues[i];
-
-                            scopeValuesList.Add(scopeValues[i]);
-                        }
-
-                        scopeValuesList.Add(options.MicroServiceName + "." + scopeItem.ControllerName + ".all");
-
-                        scopeValuesList.Add(options.MicroServiceName + ".all");
-
-                        o.AddPolicy(scopeName, policy => policy.RequireClaim(ClaimTypes.ClientScope, scopeValuesList));
+                        isms_policies.AddRange(entry_policies);
                     }
-                    #endregion
 
-                    #region User的权限策略
-                    var permissions = options.Permissions.GetFields();
-
-                    foreach (var permission in permissions)
+                    foreach (var policyConfig in isms_policies)
                     {
-                        var permissionName = permission.GetRawConstantValue().ToString();
-
-                        var permissionItem = permission.GetCustomAttribute<PolicyClaimValuesAttribute>();
-
-                        var permissionValues = permissionItem.PolicyValues;
-
-                        var permissionValuesList = new List<string>();
-
-                        for (var i = 0; i < permissionValues.Length; i++)
+                        #region Client的权限策略
+                        policyConfig.Scopes.ForEach(x =>
                         {
-                            permissionValues[i] = options.MicroServiceName + "." + permissionValues[i];
+                            var policyName = $"{PolicyKey.ClientScope}:{x}";
 
-                            permissionValuesList.Add(permissionValues[i]);
-                        }
-
-                        permissionValuesList.Add(options.MicroServiceName + "." + permissionItem.ControllerName + ".all");
-
-                        permissionValuesList.Add(options.MicroServiceName + ".all");
-
-                        o.AddPolicy(permissionName,
-                            policy => policy.RequireAssertion(context =>
+                            var policyValues = new List<string>()
                             {
-                                var userPermissionClaim = context.User.Claims.FirstOrDefault(c => c.Type.Equals(ClaimTypes.UserPermission));
+                                $"{Options.MicroServiceName}.{x}",
+                                $"{Options.MicroServiceName}.{policyConfig.ControllerName}.all",
+                                $"{Options.MicroServiceName}.all"
+                            };
 
-                                if (userPermissionClaim != null && !string.IsNullOrWhiteSpace(userPermissionClaim.Value))
+                            options.AddPolicy(policyName,
+                                policy => policy.RequireClaim(PolicyKey.ClientScope, policyValues));
+                        });
+                        #endregion
+
+                        #region User的权限策略
+                        policyConfig.Permissions.ForEach(x =>
+                        {
+                            var policyName = $"{PolicyKey.UserPermission}:{x}";
+
+                            var policyValues = new List<string>()
+                            {
+                                $"{Options.MicroServiceName}.{x}",
+                                $"{Options.MicroServiceName}.{policyConfig.ControllerName}.all",
+                                $"{Options.MicroServiceName}.all"
+                            };
+
+                            options.AddPolicy(policyName,
+                                policy => policy.RequireAssertion(handler =>
                                 {
-                                    var userPermissionClaimValue = userPermissionClaim.Value.ToLower().Split(new string[] { "," },
-                                        StringSplitOptions.RemoveEmptyEntries);
+                                    var claim = handler.User.Claims
+                                    .FirstOrDefault(c => c.Type.Equals(PolicyKey.UserPermission));
 
-                                    if (userPermissionClaimValue != null && userPermissionClaimValue.Length > 0)
+                                    if (claim != null && !string.IsNullOrWhiteSpace(claim.Value))
                                     {
-                                        foreach (var userPermissionItem in userPermissionClaimValue)
+                                        var claimValues = claim.Value.ToLower().Split(new string[] { "," },
+                                            StringSplitOptions.RemoveEmptyEntries);
+
+                                        if (claimValues != null && claimValues.Length > 0)
                                         {
-                                            if (permissionValuesList.Contains(userPermissionItem))
+                                            foreach (var item in claimValues)
                                             {
-                                                return true;
+                                                if (policyValues.Contains(item))
+                                                {
+                                                    return true;
+                                                }
                                             }
                                         }
                                     }
-                                }
-
-                                return false;
-                            }));
+                                    return false;
+                                }));
+                        });
+                        #endregion
                     }
-                    #endregion
                 });
             }
+            #endregion
 
-            if (options.SwaggerGen)
+            #region SwaggerGen
+            if (Options.EnableSwaggerGen)
             {
-                builder.Services.AddSwaggerGen(c =>
+                services.AddSwaggerGen(c =>
                 {
                     c.EnableAnnotations();
+
+                    //c.TagActionsBy(x => x.RelativePath.Split('/')[0]);
 
                     c.AddSecurityDefinition("SubscriptionKey",
                         new ApiKeyScheme()
@@ -186,20 +185,20 @@ namespace Microsoft.Extensions.DependencyInjection
                             Description = "从身份认证中心颁发的Token，根据接口要求决定是否传入。",
                         });
 
-                    if (options.IdentityServer != null)
+                    if (Options.IdentityServerUri != null)
                     {
                         c.AddSecurityDefinition("OAuth2",
                             new OAuth2Scheme()
                             {
                                 Type = "oauth2",
                                 Flow = "accessCode",
-                                AuthorizationUrl = "https://" + options.IdentityServer.Host + "/connect/authorize",
-                                TokenUrl = "https://" + options.IdentityServer.Host + "/connect/token",
+                                AuthorizationUrl = Options.IdentityServerUri.OriginalString + "/connect/authorize",
+                                TokenUrl = Options.IdentityServerUri.OriginalString + "/connect/token",
                                 Description = "勾选授权范围，获取Token",
                                 Scopes = new Dictionary<string, string>(){
-                                    { "openid","用户标识" },
-                                    { "profile","用户资料" },
-                                    { options.MicroServiceName+ ".all","所有接口权限" },
+                            { "openid","用户标识" },
+                            { "profile","用户资料" },
+                            { Options.MicroServiceName+ ".all","所有接口权限"},
                                 }
                             });
                     }
@@ -211,7 +210,7 @@ namespace Microsoft.Extensions.DependencyInjection
                     {
                         c.SwaggerDoc(description.GroupName, new Info
                         {
-                            Title = options.AssemblyName,
+                            Title = AppConstant.AssemblyName,
                             Version = description.ApiVersion.ToString(),
                             License = new License()
                             {
@@ -230,53 +229,48 @@ namespace Microsoft.Extensions.DependencyInjection
                         c.CustomSchemaIds(x => x.FullName);
                     }
 
-                    var filePath = Path.Combine(PlatformServices.Default.Application.ApplicationBasePath, options.AssemblyName + ".xml");
+                    var SiteSwaggerFilePath = Path.Combine(PlatformServices.Default.Application.ApplicationBasePath,
+                        AppConstant.AssemblyName + ".xml");
 
-                    c.IncludeXmlComments(filePath);
+                    if (File.Exists(SiteSwaggerFilePath))
+                    {
+                        c.IncludeXmlComments(SiteSwaggerFilePath);
+                    }
                 });
             }
+            #endregion
 
-            if (options.Localization) {
-                // Configure supported cultures and localization options
-                builder.Services.AddLocalization(o => o.ResourcesPath = "Resources");
+            #region Localization
+            if (Options.EnableLocalization)
+            {
+                builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
 
-                builder.Services.Configure<RequestLocalizationOptions>(o =>
+                services.Configure<RequestLocalizationOptions>(options =>
                 {
                     var supportedCultures = new[]
                     {
                     new CultureInfo("en-US"),
                     new CultureInfo("zh-CN"),
-                    };
-
-                    // State what the default culture for your application is. This will be used if no specific culture
-                    // can be determined for a given request.
-                    o.DefaultRequestCulture = new RequestCulture("zh-CN", "zh-CN");
-
-                    // You must explicitly state which cultures your application supports.
-                    // These are the cultures the app supports for formatting numbers, dates, etc.
-                    o.SupportedCultures = supportedCultures;
-
-                    // These are the cultures the app supports for UI strings, i.e. we have localized resources for.
-                    o.SupportedUICultures = supportedCultures;
-
-                    // You can change which providers are configured to determine the culture for requests, or even add a custom
-                    // provider with your own logic. The providers will be asked in order to provide a culture for each request,
-                    // and the first to provide a non-null result that is in the configured supported cultures list will be used.
-                    // By default, the following built-in providers are configured:
-                    // - QueryStringRequestCultureProvider, sets culture via "culture" and "ui-culture" query string values, useful for testing
-                    // - CookieRequestCultureProvider, sets culture via "ASPNET_CULTURE" cookie
-                    // - AcceptLanguageHeaderRequestCultureProvider, sets culture via the "Accept-Language" request header
-                    //options.RequestCultureProviders.Insert(0, new CustomRequestCultureProvider(async context =>
-                    //{
-                    //  // My custom request culture logic
-                    //  return new ProviderCultureResult("en");
-                    //}));
+                };
+                    options.DefaultRequestCulture = new RequestCulture("zh-CN", "zh-CN");
+                    options.SupportedCultures = supportedCultures;
+                    options.SupportedUICultures = supportedCultures;
                 });
-            }
 
-            if (options.ApiVersioning)
+                builder.Services.AddMvc()
+                    .AddViewLocalization(LanguageViewLocationExpanderFormat.Suffix)
+                    .AddDataAnnotationsLocalization()
+                    .AddJsonOptions(o =>
+                    {
+                        o.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
+                        o.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
+                    });
+            }
+            #endregion
+
+            #region ApiVersioning
+            if (Options.EnableApiVersioning)
             {
-                //https://github.com/Microsoft/aspnet-api-versioning/wiki/API-Documentation#aspnet-core
                 builder.Services.AddVersionedApiExplorer(o => o.GroupNameFormat = "'v'VVV");
 
                 builder.Services.AddApiVersioning(o =>
@@ -285,44 +279,75 @@ namespace Microsoft.Extensions.DependencyInjection
                     o.ReportApiVersions = true;
                 });
             }
+            #endregion
 
-            if (options.WebEncoders)
+            #region ResponseCaching
+            if (Options.EnableResponseCaching)
             {
-                services.AddWebEncoders(opt =>
-                {
-                    opt.TextEncoderSettings = new TextEncoderSettings(UnicodeRanges.All);
-                });
+                builder.Services.AddResponseCaching();
             }
+            #endregion
 
-            builder.Services.AddMvc()
-            .AddDataAnnotationsLocalization()
-            //https://stackoverflow.com/questions/34753498/self-referencing-loop-detected-in-asp-net-core
-            .AddJsonOptions(o =>
+            if (Options.IdentityServerUri != null)
             {
-                o.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
-                o.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
-            });
-
-            builder.Services.AddSingleton<AzureStorageService>();
-
-            builder.Services.AddTransient<EmailService>();
-
-            builder.Services.AddResponseCaching();
-
-            if (!string.IsNullOrWhiteSpace(options.SQLCacheConnection))
-            {
-                builder.Services.AddDistributedSqlServerCache(x =>
-                {
-                    x.ConnectionString = options.SQLCacheConnection;
-                    x.SchemaName = "dbo";
-                    x.TableName = "AppCache";
-                });
+                builder.Services.AddAuthentication(IdentityServerAuthenticationDefaults.AuthenticationScheme)
+                        .AddIdentityServerAuthentication(o =>
+                        {
+                            o.Authority = Options.IdentityServerUri.OriginalString;
+                            o.ApiName = Options.MicroServiceName;
+                        });
             }
 
             return builder;
         }
 
-       
+        private static List<PolicyConfig> PolicyConfigs(List<Type> types)
+        {
+            var policies = new List<PolicyConfig>();
+
+            foreach (var type in types)
+            {
+                var policyObject = policies.FirstOrDefault(x => x.ControllerName.Equals(type.Name.ToLower()));
+
+                if (policyObject == null)
+                {
+                    policyObject = new PolicyConfig()
+                    {
+                        ControllerName = type.Name.ToLower().Replace("controller", "")
+                    };
+                }
+
+                var ControllerAttributes = type.GetMethods().Select(x => x.GetCustomAttributes<AuthorizeAttribute>()).ToList();
+
+                foreach (var attr in ControllerAttributes)
+                {
+                    var ControllerPolicies = attr.Select(x => x.Policy.ToLower()).ToList();
+
+                    if (ControllerPolicies.Count > 0)
+                    {
+                        var scopes = ControllerPolicies
+                            .Where(x => x.IndexOf($"{PolicyKey.ClientScope}:") > -1).ToList();
+
+                        scopes.ForEach(x =>
+                        {
+                            policyObject.Scopes.Add(x.Replace($"{PolicyKey.ClientScope}:", ""));
+                        });
+
+                        var permissions = ControllerPolicies
+                            .Where(x => x.IndexOf($"{PolicyKey.UserPermission}:") > -1).ToList();
+
+                        permissions.ForEach(x =>
+                        {
+                            policyObject.Permissions.Add(x.Replace($"{PolicyKey.UserPermission}:", ""));
+                        });
+                    }
+                }
+
+                policies.Add(policyObject);
+            }
+
+            return policies;
+        }
     }
 
     public interface IMicroserviceBuilder

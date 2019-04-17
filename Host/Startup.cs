@@ -22,15 +22,9 @@ namespace Host
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMicroService(new MicroserviceOptions()
+            services.AddMicroService(Configuration,x=>
             {
-                MicroServiceName = "apiresource",
-
-                AssemblyName = Assembly.GetExecutingAssembly().GetName().Name,
-
-                Scopes = typeof(ClientScopes),
-
-                Permissions = typeof(UserPermissions)
+                x.MicroServiceName = "apiresource";
             });
 
             services.AddDbContext<ApplicationContext>(options =>

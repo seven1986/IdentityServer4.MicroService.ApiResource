@@ -8,7 +8,7 @@ using IdentityServer4.MicroService.ApiResource;
 
 namespace Host.Controllers
 {
-    public class ProductsController : BasicController
+    public class ProductsController : Controller
     {
         private readonly ApplicationContext _context;
 

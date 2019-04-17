@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
 using Microsoft.WindowsAzure.Storage.Queue;
@@ -14,11 +15,14 @@ namespace IdentityServer4.MicroService.ApiResource
     public class AzureStorageService
     {
         string Connection { get; set; }
+        readonly ILogger<AzureStorageService> logger;
 
         public AzureStorageService(
-            IConfiguration _config)
+            IConfiguration configuration,
+            ILogger<AzureStorageService> _logger)
         {
-            Connection = _config.GetConnectionString("AzureStorageConnection");
+            Connection = configuration["ConnectionStrings:AzureStorageConnection"];
+            logger = _logger;
         }
 
         public async Task<CloudBlobContainer> CreateBlobAsync(string blobContainerName)
@@ -46,7 +50,7 @@ namespace IdentityServer4.MicroService.ApiResource
             {
                 var blobContainer = await CreateBlobAsync(blobContainerName);
 
-                var blockBlob = blobContainer.GetBlockBlobReference(blobName);
+                var blockBlob = blobContainer.GetBlockBlobReference(DateTime.UtcNow.ToString("yyyyMMdd") + "/" + blobName);
 
                 await blockBlob.UploadFromStreamAsync(stream);
 

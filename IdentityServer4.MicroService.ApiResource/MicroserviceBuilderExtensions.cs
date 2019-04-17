@@ -12,36 +12,41 @@ namespace Microsoft.AspNetCore.Builder
 {
     public static class MicroserviceBuilderExtensions
     {
-        public static IApplicationBuilder UseMicroservice(this IApplicationBuilder app)
+        public static IApplicationBuilder UseMicroservice(this IApplicationBuilder builder)
         {
-            var env = app.ApplicationServices.GetService<IHostingEnvironment>();
+            var env = builder.ApplicationServices.GetService<IHostingEnvironment>();
 
-            var Configuration = app.ApplicationServices.GetService<IConfiguration>();
+            var Configuration = builder.ApplicationServices.GetService<IConfiguration>();
 
-            var options = app.ApplicationServices.GetService<MicroserviceOptions>();
+            var options = builder.ApplicationServices.GetService<MicroserviceOptions>();
 
-            var identityServer = Configuration["IdentityServer"];
-
-            if (!string.IsNullOrWhiteSpace(identityServer))
+            if (options.IdentityServerUri == null)
             {
-                options.IdentityServer = new Uri(identityServer);
+                try
+                {
+                    options.IdentityServerUri = new Uri(Configuration["IdentityServer:Host"]);
+                }
+                catch
+                {
+                    //throw new KeyNotFoundException("appsettings.json文件，没有配置IdentityServer:Host");
+                }
             }
 
-            if (options.Cors)
+            if (options.EnableCors)
             {
-                app.UseCors("default");
+                builder.UseCors("cors-allowanonymous");
             }
 
-            if (options.Localization)
+            if (options.EnableLocalization)
             {
-                var locOptions = app.ApplicationServices.GetService<IOptions<RequestLocalizationOptions>>();
+                var locOptions = builder.ApplicationServices.GetService<IOptions<RequestLocalizationOptions>>();
 
-                app.UseRequestLocalization(locOptions.Value);
+                builder.UseRequestLocalization(locOptions.Value);
             }
 
-            if (options.AuthorizationPolicy)
+            if (options.EnableAuthorizationPolicy)
             {
-                app.UseAuthentication();
+                builder.UseAuthentication();
             }
 
             var httpsEndpoint = Environment.GetEnvironmentVariable("WEBSITE_HOSTNAME");
@@ -51,9 +56,9 @@ namespace Microsoft.AspNetCore.Builder
                 httpsEndpoint = "localhost:" + Environment.GetEnvironmentVariable("ASPNETCORE_HTTPS_PORT");
             }
 
-            if (options.SwaggerGen)
+            if (options.EnableSwaggerGen)
             {
-                app.UseSwagger(x =>
+                builder.UseSwagger(x =>
                 {
                     x.PreSerializeFilters.Add((doc, req) =>
                     {
@@ -72,11 +77,11 @@ namespace Microsoft.AspNetCore.Builder
                 });
             }
 
-            if (options.SwaggerUI)
+            if (options.EnableSwaggerUI)
             {
-                app.UseSwaggerUI(c =>
+                builder.UseSwaggerUI(c =>
                     {
-                        var provider = app.ApplicationServices.GetService<IApiVersionDescriptionProvider>();
+                        var provider = builder.ApplicationServices.GetService<IApiVersionDescriptionProvider>();
 
                         foreach (var description in provider.ApiVersionDescriptions)
                         {
@@ -84,9 +89,11 @@ namespace Microsoft.AspNetCore.Builder
                                 $"/swagger/{description.GroupName}/swagger.json",
                                 description.GroupName.ToUpperInvariant());
 
-                            c.OAuthAppName(options.SwaggerUIClientName);
-                            c.OAuthClientId(options.SwaggerUIClientID);
-                            c.OAuthClientSecret(options.SwaggerUIClientSecret);
+                            c.OAuthAppName(AppConstant.SwaggerUIClientName);
+
+                            c.OAuthClientId(AppConstant.SwaggerUIClientId);
+
+                            c.OAuthClientSecret(AppConstant.SwaggerUIClientSecret);
                             c.OAuth2RedirectUrl(string.Format(httpsEndpoint + "/swagger/oauth2-redirect.html", httpsEndpoint));
                         }
 
@@ -96,10 +103,10 @@ namespace Microsoft.AspNetCore.Builder
 
             if (options.EnableResponseCaching)
             {
-                app.UseResponseCaching();
+                builder.UseResponseCaching();
             }
 
-            return app;
+            return builder;
         }
     }
 }

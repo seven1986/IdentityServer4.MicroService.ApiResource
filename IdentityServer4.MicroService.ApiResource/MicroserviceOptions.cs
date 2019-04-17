@@ -5,102 +5,54 @@ namespace IdentityServer4.MicroService.ApiResource
     public class MicroserviceOptions
     {
         /// <summary>
-        /// 项目名称
-        /// </summary>
-        public string AssemblyName { get; set; }
-
-        /// <summary>
-        /// 微服务名称，必须是英文
+        /// 微服务名称。必须是小写英文
         /// </summary>
         public string MicroServiceName { get; set; }
 
         /// <summary>
-        /// IdentityServer服务器地址
+        /// 当前项目的网址(默认读取IdentityServer:Host)
+        /// 如：https://127.0.0.1（必须为https，网址结尾无需带/）
         /// </summary>
-        public Uri IdentityServer { get; set; }
+        public Uri IdentityServerUri { get; set; }
 
         /// <summary>
-        /// 启用跨域
+        /// 启用跨域（默认true）
         /// </summary>
-        public bool Cors { get; set; } = true;
+        public bool EnableCors { get; set; } = true;
 
         /// <summary>
-        /// 启用多语言
+        /// 启用多语言（默认true）
         /// </summary>
-        public bool Localization { get; set; } = true;
+        public bool EnableLocalization { get; set; } = true;
 
         /// <summary>
-        /// 启用版本
+        /// 启用版本（默认true）
         /// </summary>
-        public bool ApiVersioning { get; set; } = true;
-
-        /// <summary>
-        /// 启用权限
-        /// </summary>
-        public bool AuthorizationPolicy { get; set; } = true;
-
-        /// <summary>
-        /// 启用SwaggerGen
-        /// </summary>
-        public bool SwaggerGen { get; set; } = true;
-
-        /// <summary>
-        /// 启用SwaggerUI
-        /// </summary>
-        public bool SwaggerUI { get; set; } = true;
-
-        /// <summary>
-        /// SwaggerUI ClientID
-        /// </summary>
-        public string SwaggerUIClientID { get; set; } = "test";
-
-        /// <summary>
-        /// SwaggerUI ClientName
-        /// </summary>
-        public string SwaggerUIClientName { get; set; } = "测试";
-
-        /// <summary>
-        /// SwaggerUI ClientSecret
-        /// </summary>
-        public string SwaggerUIClientSecret { get; set; } = "1";
+        public bool EnableApiVersioning { get; set; } = true;
 
         /// <summary>
         /// 启用WebEncoders
         /// </summary>
-        public bool WebEncoders { get; set; } = true;
+        public bool EnableWebEncoders { get; set; } = true;
 
         /// <summary>
-        /// 客户端权限
-        /// </summary>
-        public Type Scopes { get; set; }
-
-        /// <summary>
-        /// 用户权限
-        /// </summary>
-        public Type Permissions { get; set; }
-
-        /// <summary>
-        /// 启用缓存
+        /// 启用缓存（默认true）
         /// </summary>
         public bool EnableResponseCaching { get; set; } = true;
 
         /// <summary>
-        /// 启用缓存的SQL数据库链接
+        /// 启用权限（默认true）
         /// </summary>
-        public string SQLCacheConnection { get; set; }
-
-    }
-
-    public class ClaimTypes
-    {
-        /// <summary>
-        /// permission (for User)
-        /// </summary>
-        public const string UserPermission = "permission";
+        public bool EnableAuthorizationPolicy { get; set; } = true;
 
         /// <summary>
-        /// scope (for client)
+        /// 启用SwaggerGen（默认true）
         /// </summary>
-        public const string ClientScope = "scope";
+        public bool EnableSwaggerGen { get; set; } = true;
+
+        /// <summary>
+        /// 启用SwaggerUI（默认true）
+        /// </summary>
+        public bool EnableSwaggerUI { get; set; } = true;
     }
 }

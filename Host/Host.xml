@@ -4,14 +4,64 @@
         <name>Host</name>
     </assembly>
     <members>
-        <member name="T:Host.ClientScopes">
+        <member name="T:Host.Enums.ProductsControllerEnums">
             <summary>
-            Client权限定义
+            DemoControllerEnums Enums
             </summary>
         </member>
-        <member name="T:Host.UserPermissions">
+        <member name="F:Host.Enums.ProductsControllerEnums.AllowAnonymous">
             <summary>
-            User权限定义
+            无需验证
+            </summary>
+        </member>
+        <member name="F:Host.Enums.ProductsControllerEnums.Authorize">
+            <summary>
+            基本验证
+            </summary>
+        </member>
+        <member name="F:Host.Enums.ProductsControllerEnums.AuthorizeUser">
+            <summary>
+            基本验证 + 用户角色
+            </summary>
+        </member>
+        <member name="F:Host.Enums.ProductsControllerEnums.AuthorizeUserPermission">
+            <summary>
+            基本验证 + 用户角色 + 用户权限
+            </summary>
+        </member>
+        <member name="F:Host.Enums.ProductsControllerEnums.AuthorizeUserRoles">
+            <summary>
+            基本验证 + 用户角色组合
+            </summary>
+        </member>
+        <member name="F:Host.Enums.ProductsControllerEnums.AuthorizeUserRolesWithPermission">
+            <summary>
+            基本验证 + 用户角色组合 + 用户权限
+            </summary>
+        </member>
+        <member name="F:Host.Enums.ProductsControllerEnums.AuthorizeUserRolesAndClientScope">
+            <summary>
+            基本验证 + 用户角色组合 + 客户端权限
+            </summary>
+        </member>
+        <member name="F:Host.Enums.ProductsControllerEnums.AuthorizeUserRolesWithPermissionAndClientScope">
+            <summary>
+            基本验证+用户角色组合+用户权限+客户端权限
+            </summary>
+        </member>
+        <member name="F:Host.Enums.ProductsControllerEnums.AuthorizeClientScope">
+            <summary>
+            基本验证 + 客户端权限
+            </summary>
+        </member>
+        <member name="F:Host.Enums.ProductsControllerEnums.WithdrawMoneyMoreThan2000">
+            <summary>
+            每次最多提取2000元
+            </summary>
+        </member>
+        <member name="F:Host.Enums.ProductsControllerEnums.WithdrawMoneyMoreThan3000">
+            <summary>
+            每次最多提取3000元
             </summary>
         </member>
     </members>

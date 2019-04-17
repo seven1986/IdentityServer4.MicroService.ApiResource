@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,7 +24,7 @@ namespace IdentityServer4.MicroService.ApiResource
         public Action<List<string>, List<SqlParameter>> where { get; set; }
 
         /// <summary>
-        /// 添加create字段的查询条件
+        /// 添加CreateDate字段的查询条件
         /// </summary>
         public bool AutoFilter_CreateDate { get; set; } = true;
 
@@ -50,9 +51,17 @@ namespace IdentityServer4.MicroService.ApiResource
             this.value = value;
         }
 
-        public async Task<PagingResult<T>> Excute(
+        /// <summary>
+        /// 执行分页查询
+        /// </summary>
+        /// <param name="sql">分页数据查询语句</param>
+        /// <param name="sql_dataCount">数据总数查询语句</param>
+        /// <param name="propConverter">返回实体属性转换委托</param>
+        /// <returns></returns>
+        public async Task<PagingResult<T>> ExcuteAsync(
             string sql = @"SELECT * FROM {0} {1} ORDER BY {2} OFFSET {3} ROW FETCH NEXT {4} ROW ONLY",
-            string sql_dataCount = "SELECT COUNT(1) FROM {0} {1}")
+            string sql_dataCount = "SELECT COUNT(1) FROM {0} {1}",
+            Func<PropertyInfo, Object, Object> propConverter = null)
         {
             #region filters
             #region custom
@@ -94,19 +103,26 @@ namespace IdentityServer4.MicroService.ApiResource
 
             #region orderBy
             var OrderBy = Columns[TableName][0] + " DESC ";
-            if (!string.IsNullOrWhiteSpace(value.orderby) &&
-                (Columns[TableName].Contains(value.orderby) ||
-                 OrderByFieldsExtension.Contains(value.orderby)))
+
+            if (!string.IsNullOrWhiteSpace(value.orderby))
             {
-                OrderBy = " " + value.orderby + " " + (!value.asc.GetValueOrDefault() ? "DESC" : "ASC");
+                if (Columns[TableName].Contains(value.orderby) || OrderByFieldsExtension.Contains(value.orderby))
+                {
+                    OrderBy = " " + value.orderby + " " + (!value.asc.Value ? "DESC" : "ASC");
+                }
             }
             #endregion
 
             sql_dataCount = string.Format(sql_dataCount, TableName, Where);
             var total = 0;
 
-            sql = string.Format(sql, TableName, Where, OrderBy, value.skip, value.take);
+            sql = string.Format(sql, TableName, Where, OrderBy,
+                value.skip,
+                value.take);
+
             var entities = new List<T>();
+
+            var entityType = typeof(T);
 
             using (var connection = db.Database.GetDbConnection())
             {
@@ -124,15 +140,21 @@ namespace IdentityServer4.MicroService.ApiResource
                     {
                         total = int.Parse(_total.ToString());
                     }
-
-                    command.Parameters.Clear();
                 }
 
                 using (var command = connection.CreateCommand())
                 {
                     command.CommandText = sql;
 
-                    command.Parameters.AddRange(WhereParameters.ToArray());
+                    //fix error:The SqlParameter is already contained by another SqlParameterCollection.
+                    var clonedParameters = new SqlParameter[WhereParameters.Count];
+
+                    for (int i = 0, j = WhereParameters.Count; i < j; i++)
+                    {
+                        clonedParameters[i] = (SqlParameter)((ICloneable)WhereParameters[i]).Clone();
+                    }
+
+                    command.Parameters.AddRange(clonedParameters);
 
                     using (var reader = await command.ExecuteReaderAsync())
                     {
@@ -142,14 +164,38 @@ namespace IdentityServer4.MicroService.ApiResource
 
                             for (var i = 0; i < Columns[TableName].Count; i++)
                             {
-                                if (reader[Columns[TableName][i]] != DBNull.Value)
+                                var PropertyName = Columns[TableName][i];
+
+                                object PropertyValue = null;
+
+                                try
                                 {
-                                    var Property = item.GetType().GetProperty(
-                                        Columns[TableName][i]);
+                                    PropertyValue = reader[PropertyName];
+                                }
+                                catch { }
 
-                                    var PropertyValue = reader[Columns[TableName][i]];
+                                if (PropertyValue != null && PropertyValue != DBNull.Value)
+                                {
+                                    var Property = entityType.GetProperty(PropertyName);
 
-                                    Property.SetValue(item, PropertyValue);
+                                    try
+                                    {
+                                        if (propConverter != null)
+                                        {
+                                            var _PropertyValue = propConverter.Invoke(Property, PropertyValue);
+
+                                            Property.SetValue(item, _PropertyValue);
+                                        }
+
+                                        else
+                                        {
+                                            Property.SetValue(item, PropertyValue);
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        throw ex;
+                                    }
                                 }
                             }
 

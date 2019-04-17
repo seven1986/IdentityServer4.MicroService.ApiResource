@@ -55,11 +55,53 @@ namespace IdentityServer4.MicroService.ApiResource
         }
         #endregion
 
+        /// <summary>
+        /// UserId
+        /// </summary>
         protected long UserId
         {
             get
             {
-                return long.Parse(UserClaims["sub"]);
+                var subClaim = User.Claims.FirstOrDefault(x => x.Type.Equals("sub"));
+
+                if (subClaim != null)
+                {
+                    return long.Parse(subClaim.Value);
+                }
+
+                return 0L;
+            }
+        }
+
+        /// <summary>
+        /// ClientId
+        /// </summary>
+        protected string ClientId
+        {
+            get
+            {
+                return User.Claims.FirstOrDefault(x => x.Type.Equals("client_id")).Value;
+            }
+        }
+
+        /// <summary>
+        /// 租户信息
+        /// </summary>
+        protected long TenantId
+        {
+            get
+            {
+                var tenant = User.Claims.
+                    Where(x => x.Type.Contains(AppConstant.TenantTokenKey)).FirstOrDefault();
+
+                if (tenant != null)
+                {
+                    var _tenantId = JObject.Parse(tenant.Value)["id"].ToString();
+
+                    return long.Parse(_tenantId);
+                }
+
+                return 1L;
             }
         }
 
