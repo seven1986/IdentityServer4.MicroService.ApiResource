@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Hosting;
+﻿using IdentityServer4.AccessTokenValidation;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
 using Newtonsoft.Json;
@@ -17,7 +19,7 @@ namespace IdentityServer4.MicroService.ApiResource
     [ApiController]
     [Route("[controller]")]
     [Produces("application/json")]
-    public class BasicApiController : ControllerBase
+    public class ApiControllerBase : ControllerBase
     {
         /// <summary>
         /// 全球化

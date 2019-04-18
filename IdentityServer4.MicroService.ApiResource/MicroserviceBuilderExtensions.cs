@@ -44,10 +44,7 @@ namespace Microsoft.AspNetCore.Builder
                 builder.UseRequestLocalization(locOptions.Value);
             }
 
-            if (options.EnableAuthorizationPolicy)
-            {
-                builder.UseAuthentication();
-            }
+            builder.UseAuthentication();
 
             var httpsEndpoint = Environment.GetEnvironmentVariable("WEBSITE_HOSTNAME");
 
@@ -90,11 +87,9 @@ namespace Microsoft.AspNetCore.Builder
                                 description.GroupName.ToUpperInvariant());
 
                             c.OAuthAppName(AppConstant.SwaggerUIClientName);
-
                             c.OAuthClientId(AppConstant.SwaggerUIClientId);
-
                             c.OAuthClientSecret(AppConstant.SwaggerUIClientSecret);
-                            c.OAuth2RedirectUrl(string.Format(httpsEndpoint + "/swagger/oauth2-redirect.html", httpsEndpoint));
+                            c.OAuth2RedirectUrl($"https://{httpsEndpoint}/swagger/oauth2-redirect.html");
                         }
 
                         c.DocExpansion(DocExpansion.None);

@@ -81,22 +81,14 @@ namespace Microsoft.Extensions.DependencyInjection
             {
                 builder.Services.AddAuthorization(options =>
                 {
-                    var MSTypes = Assembly.GetExecutingAssembly().GetTypes()
-                    .Where(x => x.BaseType != null && x.BaseType.Name.Equals("BasicController")).ToList();
-
-                    var isms_policies = PolicyConfigs(MSTypes);
-
                     var EntryTypes = Assembly.GetEntryAssembly().GetTypes()
-                       .Where(x => x.BaseType != null && x.BaseType.Name.Equals("ControllerBase")).ToList();
+                    .Where(x => x.BaseType != null && 
+                    x.BaseType.Name.Equals("ApiControllerBase")||
+                    x.BaseType.Name.Equals("ControllerBase")).ToList();
 
                     var entry_policies = PolicyConfigs(EntryTypes);
 
-                    if (entry_policies.Count > 0)
-                    {
-                        isms_policies.AddRange(entry_policies);
-                    }
-
-                    foreach (var policyConfig in isms_policies)
+                    foreach (var policyConfig in entry_policies)
                     {
                         #region Client的权限策略
                         policyConfig.Scopes.ForEach(x =>
@@ -281,22 +273,22 @@ namespace Microsoft.Extensions.DependencyInjection
             }
             #endregion
 
+            #region Authentication
+            builder.Services.AddAuthentication(IdentityServerAuthenticationDefaults.AuthenticationScheme)
+            .AddIdentityServerAuthentication(isAuth =>
+            {
+                isAuth.Authority = Options.IdentityServerUri.OriginalString;
+                isAuth.ApiName = Options.MicroServiceName;
+                isAuth.RequireHttpsMetadata = true;
+            });
+            #endregion
+
             #region ResponseCaching
             if (Options.EnableResponseCaching)
             {
                 builder.Services.AddResponseCaching();
             }
             #endregion
-
-            if (Options.IdentityServerUri != null)
-            {
-                builder.Services.AddAuthentication(IdentityServerAuthenticationDefaults.AuthenticationScheme)
-                        .AddIdentityServerAuthentication(o =>
-                        {
-                            o.Authority = Options.IdentityServerUri.OriginalString;
-                            o.ApiName = Options.MicroServiceName;
-                        });
-            }
 
             return builder;
         }
@@ -321,26 +313,35 @@ namespace Microsoft.Extensions.DependencyInjection
 
                 foreach (var attr in ControllerAttributes)
                 {
-                    var ControllerPolicies = attr.Select(x => x.Policy.ToLower()).ToList();
+                    var ProlicyAttributes = attr.Where(x => !string.IsNullOrWhiteSpace(x.Policy)).ToList();
 
-                    if (ControllerPolicies.Count > 0)
+                    if (ProlicyAttributes.Count < 1) { continue; }
+
+                    #region Scope
+                    var ProlicyAttributes_Scope = ProlicyAttributes
+                                    .Where(x => x.Policy.IndexOf($"{PolicyKey.ClientScope}:") > -1).ToList();
+
+                    if (ProlicyAttributes_Scope.Count > 0)
                     {
-                        var scopes = ControllerPolicies
-                            .Where(x => x.IndexOf($"{PolicyKey.ClientScope}:") > -1).ToList();
-
-                        scopes.ForEach(x =>
+                        ProlicyAttributes_Scope.ForEach(x =>
                         {
-                            policyObject.Scopes.Add(x.Replace($"{PolicyKey.ClientScope}:", ""));
-                        });
-
-                        var permissions = ControllerPolicies
-                            .Where(x => x.IndexOf($"{PolicyKey.UserPermission}:") > -1).ToList();
-
-                        permissions.ForEach(x =>
-                        {
-                            policyObject.Permissions.Add(x.Replace($"{PolicyKey.UserPermission}:", ""));
+                            policyObject.Scopes.Add(x.Policy.Replace($"{PolicyKey.ClientScope}:", ""));
                         });
                     }
+                    #endregion
+
+                    #region Permission
+                    var ProlicyAttributes_Permission = ProlicyAttributes
+                                    .Where(x => x.Policy.IndexOf($"{PolicyKey.UserPermission}:") > -1).ToList();
+
+                    if (ProlicyAttributes_Permission.Count > 0)
+                    {
+                        ProlicyAttributes_Permission.ForEach(x =>
+                        {
+                            policyObject.Permissions.Add(x.Policy.Replace($"{PolicyKey.UserPermission}:", ""));
+                        });
+                    } 
+                    #endregion
                 }
 
                 policies.Add(policyObject);
