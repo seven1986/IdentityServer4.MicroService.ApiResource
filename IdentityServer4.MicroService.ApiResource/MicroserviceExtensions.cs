@@ -351,8 +351,8 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             var EntryTypes = Assembly.GetEntryAssembly().GetTypes()
                   .Where(x => x.BaseType != null &&
-                  x.BaseType.Name.Equals("ApiControllerBase") ||
-                  x.BaseType.Name.Equals("ControllerBase")).ToList();
+                  (x.BaseType.Name.Equals("ApiControllerBase") ||
+                  x.BaseType.Name.Equals("ControllerBase"))).ToList();
 
             var entry_policies = PolicyConfigs(EntryTypes);
 
