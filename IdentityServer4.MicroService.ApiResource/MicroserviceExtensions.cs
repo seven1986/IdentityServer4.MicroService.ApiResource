@@ -41,10 +41,69 @@ namespace Microsoft.Extensions.DependencyInjection
                 msOptions.Invoke(Options);
             }
 
+            var MSConfig = configuration.GetSection("MicroService").Get<MicroserviceConfig>();
+
+            #region MicroServiceName
             if (string.IsNullOrWhiteSpace(Options.MicroServiceName))
             {
-                throw new Exception("Not config MicroServiceName");
+                Options.MicroServiceName = MSConfig.Name;
+
+                if (string.IsNullOrWhiteSpace(Options.MicroServiceName))
+                {
+                    Options.MicroServiceName = AppConstant.AssemblyName.ToLower();
+
+                    throw new Exception("Not config MicroServiceName");
+                }
+            } 
+            #endregion
+
+            #region MicroServiceDisplayName
+            if (string.IsNullOrWhiteSpace(Options.MicroServiceDisplayName))
+            {
+                Options.MicroServiceDisplayName = MSConfig.DisplayName;
+
+                if (string.IsNullOrWhiteSpace(Options.MicroServiceDisplayName))
+                {
+                    Options.MicroServiceDisplayName = Options.MicroServiceName;
+                }
+            } 
+            #endregion
+
+            #region MicroServiceDescription
+            if (string.IsNullOrWhiteSpace(Options.MicroServiceDescription))
+            {
+                Options.MicroServiceDescription = MSConfig.Description;
+
+                if (string.IsNullOrWhiteSpace(Options.MicroServiceDescription))
+                {
+                    Options.MicroServiceDescription = Options.MicroServiceName;
+                }
             }
+            #endregion
+
+            #region MicroServiceClientIDs
+            if (Options.MicroServiceClientIDs.Count < 1)
+            {
+                Options.MicroServiceClientIDs = MSConfig.ClientIDs;
+
+                if (Options.MicroServiceClientIDs.Count < 1)
+                {
+                    Options.MicroServiceClientIDs = new List<string>() { "swagger" };
+                }
+            }
+            #endregion
+
+            #region MicroServiceRedirectUrls
+            if (Options.MicroServiceRedirectUrls.Count < 1)
+            {
+                Options.MicroServiceRedirectUrls = MSConfig.RedirectUrls;
+
+                if (Options.MicroServiceRedirectUrls.Count < 1)
+                {
+                    throw new Exception("please config MicroService:RedirectUrls in appsettings.json");
+                }
+            }
+            #endregion
 
             var builder = new MicroserviceBuilder(services);
 
@@ -81,12 +140,7 @@ namespace Microsoft.Extensions.DependencyInjection
             {
                 builder.Services.AddAuthorization(options =>
                 {
-                    var EntryTypes = Assembly.GetEntryAssembly().GetTypes()
-                    .Where(x => x.BaseType != null && 
-                    x.BaseType.Name.Equals("ApiControllerBase")||
-                    x.BaseType.Name.Equals("ControllerBase")).ToList();
-
-                    var entry_policies = PolicyConfigs(EntryTypes);
+                    var entry_policies = EntryAssemblyPolicies();
 
                     foreach (var policyConfig in entry_policies)
                     {
@@ -291,6 +345,18 @@ namespace Microsoft.Extensions.DependencyInjection
             #endregion
 
             return builder;
+        }
+
+        public static List<PolicyConfig> EntryAssemblyPolicies()
+        {
+            var EntryTypes = Assembly.GetEntryAssembly().GetTypes()
+                  .Where(x => x.BaseType != null &&
+                  x.BaseType.Name.Equals("ApiControllerBase") ||
+                  x.BaseType.Name.Equals("ControllerBase")).ToList();
+
+            var entry_policies = PolicyConfigs(EntryTypes);
+
+            return entry_policies;
         }
 
         private static List<PolicyConfig> PolicyConfigs(List<Type> types)

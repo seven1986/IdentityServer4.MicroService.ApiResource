@@ -4,9 +4,12 @@ using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using Swashbuckle.AspNetCore.SwaggerUI;
 using System;
 using System.Collections.Generic;
+using System.Net.Http;
+using System.Text;
 
 namespace Microsoft.AspNetCore.Builder
 {
@@ -24,12 +27,17 @@ namespace Microsoft.AspNetCore.Builder
             {
                 try
                 {
-                    options.IdentityServerUri = new Uri(Configuration["IdentityServer:Host"]);
+                    options.IdentityServerUri = new Uri(Configuration["MicroService:IdentityServer"]);
                 }
                 catch
                 {
                     //throw new KeyNotFoundException("appsettings.json文件，没有配置IdentityServer:Host");
                 }
+            }
+
+            if (options.ImportToIdentityServer)
+            {
+                ImportToIdentityServer(options);
             }
 
             if (options.EnableCors)
@@ -102,6 +110,41 @@ namespace Microsoft.AspNetCore.Builder
             }
 
             return builder;
+        }
+
+
+        static void ImportToIdentityServer(MicroserviceOptions MSOptions)
+        {
+            if (MSOptions.IdentityServerUri == null) { return; }
+
+            var url = $"{MSOptions.IdentityServerUri.OriginalString}/api/ApiResource/Import";
+
+            using (var hc = new HttpClient())
+            {
+                var content = new StringContent(JsonConvert.SerializeObject(new
+                {
+                    MSOptions.MicroServiceName,
+
+                    MSOptions.MicroServiceDisplayName,
+
+                    MSOptions.MicroServiceDescription,
+
+                    MSOptions.MicroServiceClientIDs,
+
+                    MSOptions.MicroServiceRedirectUrls,
+
+                    MicroServicePolicies = MicroserviceExtensions.EntryAssemblyPolicies()
+
+                }), Encoding.UTF8, "application/json");
+
+                try
+                {
+                    var response = hc.PostAsync(url, content).Result;
+                }
+                catch {
+
+                }
+            }
         }
     }
 }

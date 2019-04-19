@@ -27,10 +27,7 @@ namespace WebApplication2
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 
-            services.AddMicroService(Configuration, x =>
-            {
-                x.MicroServiceName = "apiresource";
-            });
+            services.AddMicroService(Configuration);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
