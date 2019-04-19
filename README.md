@@ -5,31 +5,41 @@
 
 ```csharp
 // Startup.cs
-public void ConfigureServices(IServiceCollection services)
+        // This method gets called by the runtime. Use this method to add services to the container.
+        public void ConfigureServices(IServiceCollection services)
         {
-services.AddMicroService(new MicroserviceOptions()
-            {
-                // 微服务名称
-                MicroServiceName = "apiresource",
+            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 
-                // 固定写法
-                // 然后设置项目——生成——勾选生成项目xml文件
-                AssemblyName = Assembly.GetExecutingAssembly().GetName().Name,
+            services.AddMicroService(Configuration, options => {
 
-                // 启用API权限验证
-                AuthorizationPolicy = true,
-                Scopes = typeof(ClientScopes),
-                Permissions = typeof(UserPermissions)，
-                
-                // 缓存SQL数据库链接地址，为空将不会启用
-                // 初始化：dotnet sql-cache create {sqlConnection} dbo AppCache
-                SQLCacheConnection = Configuration.GetConnectionString("DefaultConnection")
+                // 非必填，如果不设置就不会启用API鉴权
+                options.IdentityServerUri = new Uri("IdentityServer4服务器地址");
+
+                // 建议填写
+                options.MicroServiceRedirectUrls = new List<string>()
+                {
+                    "https://{当前项目网址}/swagger/oauth2-redirect.html"
+                };
+
+                // 非必填
+                //options.MicroServiceName = Assembly.GetExecutingAssembly().GetName().Name;
+                //options.MicroServiceDisplayName = "MicroServiceDisplayName";
+                //options.MicroServiceDescription = "MicroServiceDescription";
+                //options.MicroServiceClientIDs = new List<string>() { "swagger" };
+                //options.EnableApiVersioning = true;
+                //options.EnableAuthorizationPolicy = true;
+                //options.EnableCors = true;
+                //options.EnableLocalization = true;
+                //options.EnableResponseCaching = true;
+                //options.EnableSwaggerGen = true;
+                //options.EnableSwaggerUI = true;
+                //options.EnableWebEncoders = true;
+                //options.ImportToIdentityServer = true;
             });
-                //...
-          }
+        }
 
 
-           // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+       // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
             if (env.IsDevelopment())
@@ -43,8 +53,6 @@ services.AddMicroService(new MicroserviceOptions()
             }
 
             app.UseHttpsRedirection();
-
-            app.UseStaticFiles();
 
             app.UseMicroservice();
 
@@ -61,29 +69,44 @@ services.AddMicroService(new MicroserviceOptions()
 
     参照Resources/Controllers结构添加即可,名称必须与controller对应
 
-#### API权限配置 1，
-  （参考Host项目的MicroserviceConfig.cs文件）
-  * Client权限定义：ClientScopes Class
-  * User权限定义：UserPermissions Class
+#### API权限配置
+```csharp
+// GET api/values
+        [HttpGet]
+        // 验证client权限
+        // 注意格式：以scope:{当前controller名称小写}.权限名称
+        [Authorize(Policy = "scope:values.get")]
+        // 验证用户权限
+        // 注意格式：以permission:{当前controller名称小写}.权限名称
+        [Authorize(Policy = "permission:values.get")]
+        // 接口名称
+         // 注意格式：controller名称+action名称
+        [SwaggerOperation(OperationId = "ValuesGet")]
+        public ActionResult<IEnumerable<string>> Get()
+        {
+            return new string[] { "value1", "value2" };
+        }
+```
 
-#### API权限配置 2，
+#### appsettings.json配置
 微服务模式，将API连接到IdentityServer4，配置appsettings.json文件
 ```json
 {
-  IdentityServer:"identityserver4地址"
+  "Logging": {
+    "LogLevel": {
+      "Default": "Warning"
+    }
+  },
+  "AllowedHosts": "*",
+  "MicroService": {
+    "IdentityServer": "IdentityServer4地址",
+    "Name": "apiresource",
+    "DisplayName": "微服务",
+    "Description": "微服务测试项目",
+    "ClientIDs": [ "swagger" ],
+    "RedirectUrls": [ "https://当前项目地址/swagger/oauth2-redirect.html" ]
+  }
 }
-```
-
-#### 数据库配置
-
-```text
-The generated database code requires Entity Framework Core Migrations. Run the following commands:
-1. dotnet ef migrations add CreateDbSchema
-2. dotnet ef database update
- Or from the Visual Studio Package Manager Console:
-1. Add-Migration CreateIdentitySchema
-2. Update-Database
-```
 
 #### 设计参考文档
   

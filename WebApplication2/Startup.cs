@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
+using IdentityServer4.MicroService.ApiResource;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -27,7 +29,32 @@ namespace WebApplication2
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 
-            services.AddMicroService(Configuration);
+            services.AddMicroService(Configuration, options => {
+
+                // 非必填，如果不设置就不会启用API鉴权
+                options.IdentityServerUri = new Uri("IdentityServer4服务器地址");
+
+                // 建议填写
+                options.MicroServiceRedirectUrls = new List<string>()
+                {
+                    "https://{当前项目网址}/swagger/oauth2-redirect.html"
+                };
+
+                // 非必填
+                //options.MicroServiceName = Assembly.GetExecutingAssembly().GetName().Name;
+                //options.MicroServiceDisplayName = "MicroServiceDisplayName";
+                //options.MicroServiceDescription = "MicroServiceDescription";
+                //options.MicroServiceClientIDs = new List<string>() { "swagger" };
+                //options.EnableApiVersioning = true;
+                //options.EnableAuthorizationPolicy = true;
+                //options.EnableCors = true;
+                //options.EnableLocalization = true;
+                //options.EnableResponseCaching = true;
+                //options.EnableSwaggerGen = true;
+                //options.EnableSwaggerUI = true;
+                //options.EnableWebEncoders = true;
+                //options.ImportToIdentityServer = true;
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
