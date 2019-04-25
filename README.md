@@ -1,7 +1,12 @@
-# ËµÃ÷
-Î¢·şÎñÏîÄ¿Ê¾Àı¡£
 
-## Ê¹ÓÃ·½·¨
+You can quick build an standard AspNetCore Web API project as a microservice by this nuget package, and connect to IdentityServer4.MicroService Server.
+
+IdentityServer4.MicroService.ApiResource
+---------------
+[![NuGet](https://img.shields.io/nuget/v/identityserver4microservice.apiresource.svg)](https://www.nuget.org/packages/IdentityServer4MicroService.ApiResource)
+
+
+## ä½¿ç”¨æ–¹æ³•
 
 ```csharp
 // Startup.cs
@@ -12,16 +17,16 @@
 
             services.AddMicroService(Configuration, options => {
 
-                // ·Ç±ØÌî£¬Èç¹û²»ÉèÖÃ¾Í²»»áÆôÓÃAPI¼øÈ¨
-                options.IdentityServerUri = new Uri("IdentityServer4·şÎñÆ÷µØÖ·");
+                // éå¿…å¡«ï¼Œå¦‚æœä¸è®¾ç½®å°±ä¸ä¼šå¯ç”¨APIé‰´æƒ
+                options.IdentityServerUri = new Uri("IdentityServer4æœåŠ¡å™¨åœ°å€");
 
-                // ½¨ÒéÌîĞ´
+                // å»ºè®®å¡«å†™
                 options.MicroServiceRedirectUrls = new List<string>()
                 {
-                    "https://{µ±Ç°ÏîÄ¿ÍøÖ·}/swagger/oauth2-redirect.html"
+                    "https://{å½“å‰é¡¹ç›®ç½‘å€}/swagger/oauth2-redirect.html"
                 };
 
-                // ·Ç±ØÌî
+                // éå¿…å¡«
                 //options.MicroServiceName = Assembly.GetExecutingAssembly().GetName().Name;
                 //options.MicroServiceDisplayName = "MicroServiceDisplayName";
                 //options.MicroServiceDescription = "MicroServiceDescription";
@@ -61,26 +66,26 @@
 ```
 
 
-#### Ö÷ÒªÌØĞÔ£¨×Ô¶¨ÒåÈ¨ÏŞ¡¢¶àÓïÑÔ¡¢¶à°æ±¾¡¢Èë²Î/³ö²ÎÍ³Ò»¸ñÊ½£©
+#### ä¸»è¦ç‰¹æ€§ï¼ˆè‡ªå®šä¹‰æƒé™ã€å¤šè¯­è¨€ã€å¤šç‰ˆæœ¬ã€å…¥å‚/å‡ºå‚ç»Ÿä¸€æ ¼å¼ï¼‰
 
 ![swagger](swagger.png)
 
-#### ¶àÓïÑÔÅäÖÃ
+#### å¤šè¯­è¨€é…ç½®
 
-    ²ÎÕÕResources/Controllers½á¹¹Ìí¼Ó¼´¿É,Ãû³Æ±ØĞëÓëcontroller¶ÔÓ¦
+    å‚ç…§Resources/Controllersç»“æ„æ·»åŠ å³å¯,åç§°å¿…é¡»ä¸controllerå¯¹åº”
 
-#### APIÈ¨ÏŞÅäÖÃ
+#### APIæƒé™é…ç½®
 ```csharp
 // GET api/values
         [HttpGet]
-        // ÑéÖ¤clientÈ¨ÏŞ
-        // ×¢Òâ¸ñÊ½£ºÒÔscope:{µ±Ç°controllerÃû³ÆĞ¡Ğ´}.È¨ÏŞÃû³Æ
+        // éªŒè¯clientæƒé™
+        // æ³¨æ„æ ¼å¼ï¼šä»¥scope:{å½“å‰controlleråç§°å°å†™}.æƒé™åç§°
         [Authorize(Policy = "scope:values.get")]
-        // ÑéÖ¤ÓÃ»§È¨ÏŞ
-        // ×¢Òâ¸ñÊ½£ºÒÔpermission:{µ±Ç°controllerÃû³ÆĞ¡Ğ´}.È¨ÏŞÃû³Æ
+        // éªŒè¯ç”¨æˆ·æƒé™
+        // æ³¨æ„æ ¼å¼ï¼šä»¥permission:{å½“å‰controlleråç§°å°å†™}.æƒé™åç§°
         [Authorize(Policy = "permission:values.get")]
-        // ½Ó¿ÚÃû³Æ
-         // ×¢Òâ¸ñÊ½£ºcontrollerÃû³Æ+actionÃû³Æ
+        // æ¥å£åç§°
+         // æ³¨æ„æ ¼å¼ï¼šcontrolleråç§°+actionåç§°
         [SwaggerOperation(OperationId = "ValuesGet")]
         public ActionResult<IEnumerable<string>> Get()
         {
@@ -88,8 +93,8 @@
         }
 ```
 
-#### appsettings.jsonÅäÖÃ
-Î¢·şÎñÄ£Ê½£¬½«APIÁ¬½Óµ½IdentityServer4£¬ÅäÖÃappsettings.jsonÎÄ¼ş
+#### appsettings.jsoné…ç½®
+å¾®æœåŠ¡æ¨¡å¼ï¼Œå°†APIè¿æ¥åˆ°IdentityServer4ï¼Œé…ç½®appsettings.jsonæ–‡ä»¶
 ```json
 {
   "Logging": {
@@ -99,16 +104,16 @@
   },
   "AllowedHosts": "*",
   "MicroService": {
-    "IdentityServer": "IdentityServer4µØÖ·",
+    "IdentityServer": "IdentityServer4åœ°å€",
     "Name": "apiresource",
-    "DisplayName": "Î¢·şÎñ",
-    "Description": "Î¢·şÎñ²âÊÔÏîÄ¿",
+    "DisplayName": "å¾®æœåŠ¡",
+    "Description": "å¾®æœåŠ¡æµ‹è¯•é¡¹ç›®",
     "ClientIDs": [ "swagger" ],
-    "RedirectUrls": [ "https://µ±Ç°ÏîÄ¿µØÖ·/swagger/oauth2-redirect.html" ]
+    "RedirectUrls": [ "https://å½“å‰é¡¹ç›®åœ°å€/swagger/oauth2-redirect.html" ]
   }
 }
 
-#### Éè¼Æ²Î¿¼ÎÄµµ
+#### è®¾è®¡å‚è€ƒæ–‡æ¡£
   
   - https://docs.microsoft.com/zh-cn/azure/architecture/best-practices/api-design
   
